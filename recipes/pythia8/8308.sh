@@ -9,5 +9,6 @@ tar zxvf {{local_file}}
 srcdir={{workdir}}/pythia{{version}}
 
 cd {{srcdir}}
-{{srcdir}}/configure --prefix={{prefix}} && make -j {{n_cores}} && make install
+{{srcdir}}/configure --prefix={{prefix}} --enable-shared && make -j {{n_cores}} && make install
+# --with-python-include="$(python -c "from sysconfig import get_paths; info = get_paths(); print(info['include'])")"
 exit $?
