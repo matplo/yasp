@@ -434,11 +434,6 @@ def main():
 
 	sb.run()
 
-	# parse the build.sh and identify the parameters that could be overwritten - have to be in the form {{}}
-	# replace those found in either
-	# - config file
-	# - in the current environment (!)
-	# do not process if some variables are NOT DEFINED!
 
 if __name__=="__main__":
 	_rv = main()
