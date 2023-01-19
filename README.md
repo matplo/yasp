@@ -65,10 +65,10 @@ options:
 /tmp/yasp
 
 > python -c "from yasp import yasp_find_files_dirnames as yffd; print(yffd('PseudoJet.hh'));"
-['/tmp/yasp/include/fastjet/PseudoJet.hh']
+['/tmp/yasp/include/fastjet']
 
 > python -c "from yasp import yasp_find_files as yff; print(yff('PseudoJet.hh'));"
-['/tmp/yasp/include/fastjet']
+['/tmp/yasp/include/fastjet/PseudoJet.hh']
 ```
 
 or you can use it from command line
