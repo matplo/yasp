@@ -418,11 +418,15 @@ def main():
 	if args.query:
 		q = args.query
 		if q[0] == 'feature':
-			print(yasp_feature(q[1], args), file=sys.stderr)
+			print(yasp_feature(q[1], args), file=sys.stdout)
 		if q[0] == 'files':
-			print(yasp_find_files(q[1], args), file=sys.stderr)
+			_files = yasp_find_files(q[1], args)
+			for fn in _files:
+				print(fn, file=sys.stdout)
 		if q[0] == 'dirs':
-			print(yasp_find_files_dirnames(q[1], args), file=sys.stderr)
+			_dirs = yasp_find_files_dirnames(q[1], args)
+			for d in _dirs:
+				print(d, file=sys.stdout)
 		return
 
 	if args.install or args.debug:
