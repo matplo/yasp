@@ -117,9 +117,11 @@ class Yasp(GenericObject):
 		self.verbose = self.debug
 		self.get_known_recipes()
 		if self.handle_cmnd_args() == Yasp._break:
+			self.no_install = True
 			return
 		if self.download:
 			self.exec_download()
+			self.no_install = True
 			return
   
 	def set_defaults(self):
@@ -146,7 +148,7 @@ class Yasp(GenericObject):
 		if self.configure:
 			_out_dict = {}
 			_ignore_keys = ['debug', 'list', 'cleanup', 'install', 'download',
-					'dry_run', 'configure', 'use_config', 'clean', 'output', 'args', 'known_recipes', 'used_config', 'verbose']
+					'dry_run', 'configure', 'use_config', 'clean', 'output', 'args', 'known_recipes', 'used_config', 'verbose', 'query']
 			for k in self.__dict__:
 				if k in _ignore_keys:
 					continue
@@ -157,6 +159,9 @@ class Yasp(GenericObject):
 			with open(_cfg_filename, 'w') as f:
 				_ = yaml.dump(_out_dict, f)
 			print('[i] config written to', _cfg_filename, file=sys.stderr)
+			return Yasp._break
+
+		if self.query:
 			return Yasp._break
 
 		return Yasp._continue
@@ -197,6 +202,8 @@ class Yasp(GenericObject):
 					self.recipe_file = self.recipe_file + '.sh'
 
 	def run(self):
+		if self.no_install:
+			return
 		if self.install is None:
 			return
 		if type(self.install) is str:
@@ -373,8 +380,14 @@ def yasp_find_files(fname, args={}):
 
 def yasp_find_files_dirnames(fname, args={}):
 	sb = Yasp(args=args)
-	rv = find_files(sb.prefix, fname)
-	return [os.path.dirname(f) for f in rv]
+	files = find_files(sb.prefix, fname)
+	# make unique list
+	rv = [os.path.dirname(f) for f in files]
+	urv = []
+	for d in rv:
+		if d not in urv:
+			urv.append(d)
+	return urv
 
 def main():
 	parser = argparse.ArgumentParser()
@@ -393,13 +406,23 @@ def main():
 	parser.add_argument('-w', '--workdir', help='set the work dir for the setup - default is {}'.format(Yasp._default_workdir), type=str)
 	parser.add_argument('-g', '--debug', '--verbose', help='print some extra info', action='store_true', default=False)
 	parser.add_argument('-l', '--list', help='list recipes', action='store_true', default=False)
-	parser.add_argument('-q', '--query', help='query for a feature or files or directory for a file - join with --feature <name> --files <pattern> --dirs <pattern> to match a query - "PseudoJet.hh" for example', action='store_true', default=False)
+	parser.add_argument('-q', '--query', help='query for a feature or files or directory for a file - join with feature <name> files <pattern> or dirs <pattern> (where file located) to match a query - "PseudoJet.hh" for example', type=str, default=None, nargs=2)
 	args = parser.parse_args()
   
 	sb = Yasp(args=args)
 	if args.cleanup:
 		if os.path.exists(sb.workdir):
 			shutil.rmtree(sb.workdir)
+		return
+  
+	if args.query:
+		q = args.query
+		if q[0] == 'feature':
+			print(yasp_feature(q[1], args), file=sys.stderr)
+		if q[0] == 'files':
+			print(yasp_find_files(q[1], args), file=sys.stderr)
+		if q[0] == 'dirs':
+			print(yasp_find_files_dirnames(q[1], args), file=sys.stderr)
 		return
 
 	if args.install or args.debug:
