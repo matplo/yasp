@@ -2,6 +2,39 @@
 
 Yet Another Software Package[r]
 
+# help output
+
+```
+> ./yasp.py -h
+usage: yasp.py [-h] [--configure] [--use-config USE_CONFIG] [--yasp YASP] [--cleanup] [-i INSTALL [INSTALL ...]] [-d DOWNLOAD] [--clean] [--dry-run] [--recipe-dir RECIPE_DIR] [-o OUTPUT] [--prefix PREFIX] [-w WORKDIR] [-g] [-l] [-q QUERY QUERY]
+
+options:
+  -h, --help            show this help message and exit
+  --configure           set and write default configuration
+  --use-config USE_CONFIG
+                        use particular configuration file - default=$PWD/.yasp.yaml
+  --yasp YASP           point to yasp.py executable - default: this script
+  --cleanup             clean the main workdir (downloaded and build items)
+  -i INSTALL [INSTALL ...], --install INSTALL [INSTALL ...]
+                        name of the recipe to process
+  -d DOWNLOAD, --download DOWNLOAD
+                        download file
+  --clean               start from scratch
+  --dry-run             dry run - do not execute output script
+  --recipe-dir RECIPE_DIR
+                        dir where recipes info sit - default: /Users/ploskon/devel/yasp/recipes
+  -o OUTPUT, --output OUTPUT
+                        output definition - for example for download
+  --prefix PREFIX       prefix of the installation /Users/ploskon/yasp
+  -w WORKDIR, --workdir WORKDIR
+                        set the work dir for the setup - default is /Users/ploskon/yasp/.workdir
+  -g, --debug, --verbose
+                        print some extra info
+  -l, --list            list recipes
+  -q QUERY QUERY, --query QUERY QUERY
+                        query for a feature or files or directory for a file - join with feature <name> files <pattern> or dirs <pattern> (where file located) to match a query - "PseudoJet.hh" for example
+```
+
 # recommendation
 
 - use within a conda env (it does make life simpler ;-)
