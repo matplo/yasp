@@ -19,6 +19,8 @@ Yet Another Software Package[r]
 
 - --configure will take --prefix --workdir and --recipe-dir into account
 - location of the config file can be overwritten with --use-config
+- use --list to list known recipes (simple scripts with some templating)
+- use --recipe-dir to use a different location of the recipes
 
 # use from within python
 
