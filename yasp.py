@@ -64,7 +64,7 @@ class GenericObject(object):
 				continue
 			sval = str(getattr(self, a))
 			if len(sval) > 200:
-				sval = sval[:200]
+				sval = sval[:196] + '...'
 			s.append('   {} = {}'.format(str(a), sval))
 		return '\n'.join(s)
 
@@ -121,7 +121,6 @@ class Yasp(GenericObject):
 		if self.download:
 			self.exec_download()
 			return
-		self.process_install()
   
 	def set_defaults(self):
 		for d in Yasp._defaults:
@@ -129,24 +128,6 @@ class Yasp(GenericObject):
 				self.__setattr__(d, Yasp._defaults[d])
 			else:
 				print(self.__getattr__(d))
-
-	def process_install(self):
-		self.recipe = self.install
-		self.fix_recipe_scriptname()
-		if self.recipe:
-			self.get_from_environment()
-			# handle the script
-			if not os.path.isfile(self.recipe_file):
-				print('[e] recipe file', self.recipe_file, 'does not exist or not a file', file=sys.stderr)
-				self.valid = False
-				return
-			else:
-				if self.verbose:
-					print('[i] script specified exists:', self.recipe_file, file=sys.stderr)
-				self.valid = True
-			self.workdir = os.path.join(self.workdir, self.recipe)
-			self.builddir = os.path.join(self.workdir, 'build')
-			self.output_script = os.path.join(self.workdir, 'build.sh')
 
 	def get_known_recipes(self):
 		self.known_recipes = []
@@ -216,20 +197,42 @@ class Yasp(GenericObject):
 					self.recipe_file = self.recipe_file + '.sh'
 
 	def run(self):
-		if self.recipe:
-			if self.valid:
-				self.makedirs()
-				self.make_replacements()
-				if self.dry_run:
-					print(f'[i] this is dry run - stopping before executing {self.output_script}')
+		if self.install is None:
+			return
+		if type(self.install) is str:
+			self.install = [self.install]
+		for _recipe in self.install:
+			self.recipe = _recipe
+			self.fix_recipe_scriptname()
+			if self.recipe:
+				self.get_from_environment()
+				# handle the script
+				if not os.path.isfile(self.recipe_file):
+					print('[e] recipe file', self.recipe_file,
+					      'does not exist or not a file', file=sys.stderr)
+					self.valid = False
+					return
 				else:
-					_p = None
-					try:
-						_p = subprocess.run([self.output_script], check=True)
-					except subprocess.CalledProcessError as exc:
-						print(f"{self.output_script} returned {exc.returncode}\n{exc}")
-					if _p:
-						print(f'[i] {self.output_script} returned {_p.returncode}')
+					if self.verbose:
+						print('[i] script specified exists:', self.recipe_file, file=sys.stderr)
+					self.valid = True
+				self.workdir = os.path.join(self.workdir, self.recipe)
+				self.builddir = os.path.join(self.workdir, 'build')
+				self.output_script = os.path.join(self.workdir, 'build.sh')
+				if self.valid:
+					self.makedirs()
+					self.make_replacements()
+					if self.dry_run:
+						print(f'[i] this is dry run - stopping before executing {self.output_script}')	
+						print(self, file=sys.stderr)
+					else:
+						_p = None
+						try:
+							_p = subprocess.run([self.output_script], check=True)
+						except subprocess.CalledProcessError as exc:
+							print(f"{self.output_script} returned {exc.returncode}\n{exc}")
+						if _p:
+							print(f'[i] {self.output_script} returned {_p.returncode}')
 
 	def makedirs(self):
 		if self.clean:
@@ -380,7 +383,7 @@ def main():
 	parser.add_argument('--use-config', help='use particular configuration file - default=$PWD/.yasp.yaml', default=None, type=str)
 	parser.add_argument(f'--{Yasp._prog_name}', help=f'point to {Yasp._prog_name}.py executable - default: this script')
 	parser.add_argument('--cleanup', help='clean the main workdir (downloaded and build items)', action='store_true', default=False)
-	parser.add_argument('-i', '--install', help='name of the recipe to process', type=str)
+	parser.add_argument('-i', '--install', help='name of the recipe to process', type=str, nargs='+')
 	parser.add_argument('-d', '--download', help='download file', type=str)
 	parser.add_argument('--clean', help='start from scratch', action='store_true', default=False)
 	parser.add_argument('--dry-run', help='dry run - do not execute output script', action='store_true', default=False)
@@ -390,6 +393,7 @@ def main():
 	parser.add_argument('-w', '--workdir', help='set the work dir for the setup - default is {}'.format(Yasp._default_workdir), type=str)
 	parser.add_argument('-g', '--debug', '--verbose', help='print some extra info', action='store_true', default=False)
 	parser.add_argument('-l', '--list', help='list recipes', action='store_true', default=False)
+	parser.add_argument('-q', '--query', help='query for a feature or files or directory for a file - join with --feature <name> --files <pattern> --dirs <pattern> to match a query - "PseudoJet.hh" for example', action='store_true', default=False)
 	args = parser.parse_args()
   
 	sb = Yasp(args=args)
