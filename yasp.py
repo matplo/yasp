@@ -8,7 +8,7 @@ import subprocess
 import re
 import shutil
 import fnmatch
-
+import yaml
 
 def get_this_directory():
 	return os.path.dirname(os.path.abspath(__file__))
@@ -86,13 +86,40 @@ class ConfigData(GenericObject):
 
 
 class Yasp(GenericObject):
+	_break = 'stop'
+	_continue = 'continue'
+
+	_defaults = {
+		
+	}
+
 	def __init__(self, **kwargs):
 		super(Yasp, self).__init__(**kwargs)
+		self.set_defaults()
 		if self.args:
-			self.configure_from_dict(self.args.__dict__)
+			if self.args.use_config:
+				_cfg_filename = self.args.use_config
+			else:
+				_cfg_filename = self.args.default_config
+			self.configure_from_config(_cfg_filename)
+			if type(self.args) == dict:
+				self.configure_from_dict(self.args)
+			else:
+				self.configure_from_dict(self.args.__dict__)
 		if self.yasp is None:
 			self.yasp = __file__
 		self.verbose = self.debug
+		self.get_known_recipes()
+		if self.handle_cmnd_args() == Yasp._break:
+			return
+		if self.download:
+			self.exec_download()
+			return
+		self.process_install()
+  
+	def set_defaults(self):
+
+	def process_install(self):
 		self.recipe = self.install
 		self.fix_recipe_scriptname()
 		if self.recipe:
@@ -109,6 +136,50 @@ class Yasp(GenericObject):
 			self.workdir = os.path.join(self.workdir, self.recipe)
 			self.builddir = os.path.join(self.workdir, 'build')
 			self.output_script = os.path.join(self.workdir, 'build.sh')
+
+	def get_known_recipes(self):
+		self.known_recipes = []
+		files = find_files(self.recipe_dir, '*.sh')
+		for fn in files:
+			recipe = os.path.splitext(fn.replace(self.recipe_dir + '/', ''))[0]
+			self.known_recipes.append(recipe)
+
+	def handle_cmnd_args(self):
+		if self.list:
+			self.get_known_recipes()
+			for r in self.known_recipes:
+				print(' ', r)
+			return Yasp._break
+
+		if self.configure:
+			_out_dict = {}
+			_ignore_keys = ['debug', 'list', 'cleanup', 'install', 'download',
+					'dry_run', 'configure', 'use_config', 'clean', 'output', 'args', 'known_recipes', 'used_config', 'verbose']
+			for k in self.__dict__:
+				if k in _ignore_keys:
+					continue
+				_out_dict[k] = self.__dict__[k]
+			_cfg_filename = self.default_config
+			if self.use_config:
+				_cfg_filename = self.use_config
+			with open(_cfg_filename, 'w') as f:
+				_ = yaml.dump(_out_dict, f)
+			print('[i] config written to', _cfg_filename, file=sys.stderr)
+			return Yasp._break
+
+		return Yasp._continue
+
+	def configure_from_config(self, _cfg_filename):
+		if os.path.isfile(_cfg_filename):
+			with open(_cfg_filename) as f:
+				_cfg_data = yaml.load(f, Loader=yaml.FullLoader)
+				if _cfg_data is None:
+					_cfg_data = {}
+				for k in _cfg_data:
+					self.__setattr__(k, _cfg_data[k])
+				self.used_config_file = _cfg_filename
+				self.used_config = _cfg_data
+		return Yasp._continue
 
 	def get_from_environment(self):
 		_which = { 'CXX': 'g++'}
@@ -148,10 +219,6 @@ class Yasp(GenericObject):
 						print(f"{self.output_script} returned {exc.returncode}\n{exc}")
 					if _p:
 						print(f'[i] {self.output_script} returned {_p.returncode}')
-		else:
-			# download if called
-			if self.download:
-				self.exec_download()
 
 	def makedirs(self):
 		if self.clean:
@@ -281,37 +348,34 @@ def main():
 	parser = argparse.ArgumentParser()
 	# group = parser.add_mutually_exclusive_group(required=True)
 	_prog_name = os.path.splitext(os.path.basename(__file__))[0]
+	_default_config = os.path.join(os.path.dirname(__file__), '.yasp.yaml')
+	_default_recipe_dir = os.path.join(get_this_directory(), 'recipes')
+	_default_prefix = os.path.join(os.getenv('HOME'), _prog_name) # os.path.join(get_this_directory(), 'software')
+	_default_workdir = os.path.join(os.getenv('HOME'), _prog_name, '.workdir')
+	parser.add_argument('--configure', help='set and write default configuration', default=False, action='store_true')
+	parser.add_argument('--use-config', help='use particular configuration file - default=$PWD/.yasp.yaml', default=None, type=str)
+	parser.add_argument('--default-config', help='default config', default=_default_config, type=str)
 	parser.add_argument(f'--{_prog_name}', help=f'point to {_prog_name}.py executable - default: this script', default=__file__)
 	parser.add_argument('--cleanup', help='clean the main workdir (downloaded and build items)', action='store_true', default=False)
 	parser.add_argument('-i', '--install', help='name of the recipe to process', type=str)
 	parser.add_argument('-d', '--download', help='download file', type=str)
 	parser.add_argument('--clean', help='start from scratch', action='store_true', default=False)
 	parser.add_argument('--dry-run', help='dry run - do not execute output script', action='store_true', default=False)
-	_recipe_dir = os.path.join(get_this_directory(), 'recipes')
-	parser.add_argument('--recipe-dir', help='dir where recipes info sit - default: {}'.format(_recipe_dir), default=_recipe_dir, type=str)
+	parser.add_argument('--recipe-dir', help='dir where recipes info sit - default: {}'.format(_default_recipe_dir), default=_default_recipe_dir, type=str)
 	parser.add_argument('-o', '--output', help='output definition - for example for download', default='default.output', type=str)
-	_default_prefix = os.path.join(os.getenv('HOME'), _prog_name) # os.path.join(get_this_directory(), 'software')
 	parser.add_argument('--prefix', help='prefix of the installation {}'.format(_default_prefix), default=_default_prefix)
-	_default_workdir = os.path.join(os.getenv('HOME'), _prog_name, '.workdir')
 	parser.add_argument('-w', '--workdir', help='set the work dir for the setup - default is {}'.format(_default_workdir), default='{}'.format(_default_workdir), type=str)
 	parser.add_argument('-g', '--debug', '--verbose', help='print some extra info', action='store_true', default=False)
 	parser.add_argument('-l', '--list', help='list recipes', action='store_true', default=False)
 	args = parser.parse_args()
  
-	if args.list:
-		files = find_files(args.recipe_dir, '*.sh')
-		for fn in files:
-			recipe = os.path.splitext(fn.replace(args.recipe_dir + '/', ''))[0]
-			print(' ', recipe)
-		return 
-
 	sb = Yasp(args=args)
 	if args.cleanup:
 		if os.path.exists(sb.workdir):
 			shutil.rmtree(sb.workdir)
 		return
 
-	if args.install:
+	if args.install or args.debug:
 		print(sb)
 
 	sb.run()

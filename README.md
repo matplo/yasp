@@ -1,4 +1,5 @@
 # yasp
+
 Yet Another Software Package[r]
 
 # recommendation
@@ -8,7 +9,4 @@ Yet Another Software Package[r]
 
 # to do
 
-- configuration - write function that would set defaults - --prefix for example
-- this could retrieved to be used by other packages
-
-
+- this could be used by other packages
