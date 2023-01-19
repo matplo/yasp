@@ -11,6 +11,7 @@ srcdir={{workdir}}/fastjet-{{version}}
 
 cd {{builddir}}
 cgal_opt=--disable-cgal
-other_opts=--enable-allcxxplugins --enable-pyext
-{{srcdir}}/configure --prefix={{prefix}} {{cgal_opt}} {{other_opts}} && make -j {{n_cores}} && make install
+other_opts="--enable-allcxxplugins"
+# not enabling the swig interface --enable-pyext
+{{srcdir}}/configure --prefix={{prefix}} {{cgal_opt}} ${other_opts} && make -j {{n_cores}} && make install
 exit $?

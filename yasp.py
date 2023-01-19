@@ -42,8 +42,10 @@ class GenericObject(object):
 		for key, value in kwargs.items():
 			self.__setattr__(key, value)
 
-	def configure_from_dict(self, d):
+	def configure_from_dict(self, d, ignore_none=False):
 		for k in d:
+			if d[k] is None:
+				continue
 			self.__setattr__(k, d[k])
 
 	def __getattr__(self, key):
@@ -88,26 +90,30 @@ class ConfigData(GenericObject):
 class Yasp(GenericObject):
 	_break = 'stop'
 	_continue = 'continue'
-
+	_prog_name = os.path.splitext(os.path.basename(__file__))[0]
+	_default_config = os.path.join(os.path.dirname(__file__), '.yasp.yaml')
+	_default_recipe_dir = os.path.join(get_this_directory(), 'recipes')
+	_default_prefix = os.path.join(os.getenv('HOME'), _prog_name)
+	_default_workdir = os.path.join(os.getenv('HOME'), _prog_name, '.workdir')
 	_defaults = {
-		
+			f'{_prog_name}' : __file__,
+            'default_config' : _default_config,
+            'recipe_dir' : _default_recipe_dir,
+            'prefix' : _default_prefix,
+            'workdir' : _default_workdir
 	}
 
 	def __init__(self, **kwargs):
 		super(Yasp, self).__init__(**kwargs)
 		self.set_defaults()
+		self.configure_from_config(Yasp._default_config)
 		if self.args:
 			if self.args.use_config:
-				_cfg_filename = self.args.use_config
-			else:
-				_cfg_filename = self.args.default_config
-			self.configure_from_config(_cfg_filename)
+				self.configure_from_config(self.args.use_config)
 			if type(self.args) == dict:
-				self.configure_from_dict(self.args)
+				self.configure_from_dict(self.args, ignore_none=True)
 			else:
 				self.configure_from_dict(self.args.__dict__)
-		if self.yasp is None:
-			self.yasp = __file__
 		self.verbose = self.debug
 		self.get_known_recipes()
 		if self.handle_cmnd_args() == Yasp._break:
@@ -118,6 +124,11 @@ class Yasp(GenericObject):
 		self.process_install()
   
 	def set_defaults(self):
+		for d in Yasp._defaults:
+			if self.__getattr__(d) is None:
+				self.__setattr__(d, Yasp._defaults[d])
+			else:
+				print(self.__getattr__(d))
 
 	def process_install(self):
 		self.recipe = self.install
@@ -344,31 +355,43 @@ class Yasp(GenericObject):
 		return rc
 
 
+def yasp_feature(what, args={}):
+	sb = Yasp(args=args)
+	try:
+		rv = sb.__getattr__(what)
+	except:
+		rv = None
+	return rv
+
+def yasp_find_files(fname, args={}):
+	sb = Yasp(args=args)
+	rv = find_files(sb.prefix, fname)
+	return rv
+
+def yasp_find_files_dirnames(fname, args={}):
+	sb = Yasp(args=args)
+	rv = find_files(sb.prefix, fname)
+	return [os.path.dirname(f) for f in rv]
+
 def main():
 	parser = argparse.ArgumentParser()
 	# group = parser.add_mutually_exclusive_group(required=True)
-	_prog_name = os.path.splitext(os.path.basename(__file__))[0]
-	_default_config = os.path.join(os.path.dirname(__file__), '.yasp.yaml')
-	_default_recipe_dir = os.path.join(get_this_directory(), 'recipes')
-	_default_prefix = os.path.join(os.getenv('HOME'), _prog_name) # os.path.join(get_this_directory(), 'software')
-	_default_workdir = os.path.join(os.getenv('HOME'), _prog_name, '.workdir')
 	parser.add_argument('--configure', help='set and write default configuration', default=False, action='store_true')
 	parser.add_argument('--use-config', help='use particular configuration file - default=$PWD/.yasp.yaml', default=None, type=str)
-	parser.add_argument('--default-config', help='default config', default=_default_config, type=str)
-	parser.add_argument(f'--{_prog_name}', help=f'point to {_prog_name}.py executable - default: this script', default=__file__)
+	parser.add_argument(f'--{Yasp._prog_name}', help=f'point to {Yasp._prog_name}.py executable - default: this script')
 	parser.add_argument('--cleanup', help='clean the main workdir (downloaded and build items)', action='store_true', default=False)
 	parser.add_argument('-i', '--install', help='name of the recipe to process', type=str)
 	parser.add_argument('-d', '--download', help='download file', type=str)
 	parser.add_argument('--clean', help='start from scratch', action='store_true', default=False)
 	parser.add_argument('--dry-run', help='dry run - do not execute output script', action='store_true', default=False)
-	parser.add_argument('--recipe-dir', help='dir where recipes info sit - default: {}'.format(_default_recipe_dir), default=_default_recipe_dir, type=str)
+	parser.add_argument('--recipe-dir', help='dir where recipes info sit - default: {}'.format(Yasp._default_recipe_dir), type=str)
 	parser.add_argument('-o', '--output', help='output definition - for example for download', default='default.output', type=str)
-	parser.add_argument('--prefix', help='prefix of the installation {}'.format(_default_prefix), default=_default_prefix)
-	parser.add_argument('-w', '--workdir', help='set the work dir for the setup - default is {}'.format(_default_workdir), default='{}'.format(_default_workdir), type=str)
+	parser.add_argument('--prefix', help='prefix of the installation {}'.format(Yasp._default_prefix))
+	parser.add_argument('-w', '--workdir', help='set the work dir for the setup - default is {}'.format(Yasp._default_workdir), type=str)
 	parser.add_argument('-g', '--debug', '--verbose', help='print some extra info', action='store_true', default=False)
 	parser.add_argument('-l', '--list', help='list recipes', action='store_true', default=False)
 	args = parser.parse_args()
- 
+  
 	sb = Yasp(args=args)
 	if args.cleanup:
 		if os.path.exists(sb.workdir):
