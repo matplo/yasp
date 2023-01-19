@@ -27,5 +27,5 @@ or you can use it from command line
 ```
 ./yasp.py -q feature prefix
 ./yasp.py -q files ClusterSequence*
- ./yasp.py -q dirs Lund*
+./yasp.py -q dirs Lund*
 ```
