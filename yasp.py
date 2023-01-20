@@ -191,7 +191,8 @@ class Yasp(GenericObject):
 
 	def fix_recipe_scriptname(self):
 		if self.recipe:
-			self.recipe = self.recipe.replace('-', '/')
+			# self.recipe = self.recipe.replace('-', '/')
+			self.recipe = self.recipe.replace('==', '/')
 			self.recipe_file = os.path.join(self.recipe_dir, self.recipe)
 			if os.path.isdir(self.recipe_file):
 				_candidates = find_files(self.recipe_file, '*.sh')
