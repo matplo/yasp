@@ -43,6 +43,16 @@ options:
 
 # recommendation
 
+## use pipenv
+
+```
+current_python_version=$(python3 -c "import sys; print('.'.join([str(s) for s in sys.version_info[:3]]));")
+pipenv --python ${current_python_version}
+pipenv install pyyaml argparse
+pipenv shell
+```
+
+## try conda
 - use within a conda env (it does make life simpler ;-)
 - packages here likely do not exist in conda or need a custom install
 - for example this will install fastjet, fastjet contributed algos, and pythia8 to prefix dir (default is $HOME/yasp)
