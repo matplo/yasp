@@ -6,7 +6,9 @@ Yet Another Software Package[r]
 
 ```
 > ./yasp.py -h
-usage: yasp.py [-h] [--configure] [--use-config USE_CONFIG] [--yasp YASP] [--cleanup] [-i INSTALL [INSTALL ...]] [-d DOWNLOAD] [--clean] [--dry-run] [--recipe-dir RECIPE_DIR] [-o OUTPUT] [--prefix PREFIX] [-w WORKDIR] [-g] [-l] [-q QUERY QUERY]
+usage: yasp.py [-h] [--configure] [--use-config USE_CONFIG] [--yasp YASP] [--cleanup] [-i INSTALL [INSTALL ...]] [-d DOWNLOAD] [--clean]
+               [--redownload] [--dry-run] [--recipe-dir RECIPE_DIR] [-o OUTPUT] [--prefix PREFIX] [-w WORKDIR] [-g] [-l]
+               [--donwload-command DONWLOAD_COMMAND] [-q QUERY QUERY]
 
 options:
   -h, --help            show this help message and exit
@@ -20,6 +22,7 @@ options:
   -d DOWNLOAD, --download DOWNLOAD
                         download file
   --clean               start from scratch
+  --redownload          redownload even if file already there
   --dry-run             dry run - do not execute output script
   --recipe-dir RECIPE_DIR
                         dir where recipes info sit - default: /Users/ploskon/devel/yasp/recipes
@@ -31,8 +34,11 @@ options:
   -g, --debug, --verbose
                         print some extra info
   -l, --list            list recipes
+  --donwload-command DONWLOAD_COMMAND
+                        overwrite download command - default is wget; could be curl
   -q QUERY QUERY, --query QUERY QUERY
-                        query for a feature or files or directory for a file - join with feature <name> files <pattern> or dirs <pattern> (where file located) to match a query - "PseudoJet.hh" for example
+                        query for a feature or files or directory for a file - join with feature <name> files <pattern> or dirs <pattern> (where
+                        file located) to match a query - "PseudoJet.hh" for example
 ```
 
 # recommendation
