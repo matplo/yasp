@@ -100,7 +100,8 @@ class Yasp(GenericObject):
             'default_config' : _default_config,
             'recipe_dir' : _default_recipe_dir,
             'prefix' : _default_prefix,
-            'workdir' : _default_workdir
+            'workdir' : _default_workdir,
+			'download_command' : 'wget'
 	}
 
 	def __init__(self, **kwargs):
@@ -147,7 +148,7 @@ class Yasp(GenericObject):
 
 		if self.configure:
 			_out_dict = {}
-			_ignore_keys = ['debug', 'list', 'cleanup', 'install', 'download',
+			_ignore_keys = ['debug', 'list', 'cleanup', 'install', 'download', "redownload",
 					'dry_run', 'configure', 'use_config', 'clean', 'output', 'args', 'known_recipes', 'used_config', 'verbose', 'query']
 			for k in self.__dict__:
 				if k in _ignore_keys:
@@ -243,8 +244,10 @@ class Yasp(GenericObject):
 
 	def makedirs(self):
 		if self.clean:
-			if os.path.exists(self.workdir):
-				shutil.rmtree(self.workdir)
+			#if os.path.exists(self.workdir):
+			#	shutil.rmtree(self.workdir)
+			if os.path.exists(self.builddir):
+				shutil.rmtree(self.builddir)
 		if os.makedirs(self.workdir, exist_ok=True):
 			os.chdir(self.workdir)
 		os.makedirs(self.builddir, exist_ok=True)
@@ -290,6 +293,8 @@ class Yasp(GenericObject):
 					_repls = _definitions[_tag+'=']
 				except KeyError:
 					_repls = str(self.__getattr__(_tag))
+				if _repls is None:
+					_repls = ""
 				newl = newl.replace(r, _repls)
 				replaced = True
 		return newl, replaced
@@ -348,13 +353,18 @@ class Yasp(GenericObject):
 		os.chdir(self.workdir)
 		if self.verbose:
 			print('[i] current dir:', os.getcwd(), file=sys.stderr)
-		if self.clean:
+		if self.redownload:
 			if os.path.isfile(self.output):
 				os.remove(self.output)
 		if os.path.isfile(self.output):
 			return 0
 		print(f'[i] downloading {self.download}', file=sys.stderr)
-		out, err, rc = self.exec_cmnd('curl -o {} {}'.format(self.output, self.download))
+		_opt = '-O'
+		if self.dowload_command == 'wget':
+			_opt = '-O'
+		if self.dowload_command == 'curl':
+			_opt = '-o'
+		out, err, rc = self.exec_cmnd('{} {} {} {}'.format(self.download_command, _opt, self.output, self.download))
 		if rc > 0:
 			print('[i] returning error={}'.format(rc), file=sys.stderr)
 		if self.verbose:
@@ -399,6 +409,7 @@ def main():
 	parser.add_argument('-i', '--install', help='name of the recipe to process', type=str, nargs='+')
 	parser.add_argument('-d', '--download', help='download file', type=str)
 	parser.add_argument('--clean', help='start from scratch', action='store_true', default=False)
+	parser.add_argument('--redownload', help='redownload even if file already there', action='store_true', default=False)
 	parser.add_argument('--dry-run', help='dry run - do not execute output script', action='store_true', default=False)
 	parser.add_argument('--recipe-dir', help='dir where recipes info sit - default: {}'.format(Yasp._default_recipe_dir), type=str)
 	parser.add_argument('-o', '--output', help='output definition - for example for download', default='default.output', type=str)
@@ -406,6 +417,7 @@ def main():
 	parser.add_argument('-w', '--workdir', help='set the work dir for the setup - default is {}'.format(Yasp._default_workdir), type=str)
 	parser.add_argument('-g', '--debug', '--verbose', help='print some extra info', action='store_true', default=False)
 	parser.add_argument('-l', '--list', help='list recipes', action='store_true', default=False)
+	parser.add_argument('--donwload-command', help='overwrite download command - default is wget; could be curl', type=str, default=None)
 	parser.add_argument('-q', '--query', help='query for a feature or files or directory for a file - join with feature <name> files <pattern> or dirs <pattern> (where file located) to match a query - "PseudoJet.hh" for example', type=str, default=None, nargs=2)
 	args = parser.parse_args()
   
