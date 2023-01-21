@@ -204,6 +204,22 @@ class Yasp(GenericObject):
 				if _split[1] != '.sh':
 					self.recipe_file = self.recipe_file + '.sh'
 
+
+	def user_confirm(self, what, default_answer, acceptable_answers=['yes', 'no', 'y', 'n']):
+		_answer = '?'
+		if self.yes:
+			return 'yes'
+		acceptable_answers.append(default_answer)
+		while _answer.lower() not in acceptable_answers:
+			_answer = str(input(f'[q] {what} {acceptable_answers} [default={default_answer}]?')).lower().strip()
+			if len(_answer) < 1:
+				_answer = default_answer
+		if _answer == 'y':
+			_answer = 'yes'
+		if _answer == 'n':
+			_answer = 'no'
+		return _answer
+
 	def run(self):
 		if self.no_install:
 			return
@@ -234,6 +250,12 @@ class Yasp(GenericObject):
 				if self.valid:
 					self.makedirs()
 					self.make_replacements()
+					if self.cleanup:
+						self.do_cleanup()
+						return
+					if self.clean:
+						self.do_clean()
+						return
 					if self.dry_run or self.query:
 						if self.dry_run:
 							print(f'[i] this is dry run - stopping before executing {self.output_script}')
@@ -247,12 +269,23 @@ class Yasp(GenericObject):
 						if _p:
 							print(f'[i] {self.output_script} returned {_p.returncode}')
 
+	def rm_dir_with_confirm(self, sdir):
+		if os.path.exists(sdir):
+			if self.user_confirm(f'remove {sdir}', 'y') == 'yes':
+				if self.dry_run:
+					print(f'[i] not removing since dry run is flag is set to: {self.dry_run}')
+				else:
+					print(f'[w] removing {sdir}')
+					shutil.rmtree(sdir)
+
+	def do_clean(self):
+		self.rm_dir_with_confirm(self.builddir)
+		self.rm_dir_with_confirm(self.prefix)
+
+	def do_cleanup(self):
+		self.rm_dir_with_confirm(self.workdir)
+
 	def makedirs(self):
-		if self.clean:
-			#if os.path.exists(self.workdir):
-			#	shutil.rmtree(self.workdir)
-			if os.path.exists(self.builddir):
-				shutil.rmtree(self.builddir)
 		if os.makedirs(self.workdir, exist_ok=True):
 			os.chdir(self.workdir)
 		os.makedirs(self.builddir, exist_ok=True)
@@ -428,13 +461,10 @@ def main():
 	parser.add_argument('-l', '--list', help='list recipes', action='store_true', default=False)
 	parser.add_argument('--donwload-command', help='overwrite download command - default is wget; could be curl', type=str, default=None)
 	parser.add_argument('-q', '--query', help='query for a feature or files or directory for a file - join with feature <name> files <pattern> or dirs <pattern> (where file located) to match a query - "PseudoJet.hh" for example', type=str, default=None, nargs=2)
+	parser.add_argument('-y', '--yes', help='answer yes to any questions - in particular, on --clean so', action='store_true', default=False)
 	args = parser.parse_args()
 
 	sb = Yasp(args=args)
-	if args.cleanup:
-		if os.path.exists(sb.workdir):
-			shutil.rmtree(sb.workdir)
-		return
 
 	if args.query:
 		q = args.query
