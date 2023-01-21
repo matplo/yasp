@@ -90,6 +90,7 @@ class ConfigData(GenericObject):
 class Yasp(GenericObject):
 	_break = 'stop'
 	_continue = 'continue'
+	_same_prefix = False
 	_prog_name = os.path.splitext(os.path.basename(__file__))[0]
 	_default_config = os.path.join(os.path.dirname(__file__), '.yasp.yaml')
 	_default_recipe_dir = os.path.join(get_this_directory(), 'recipes')
@@ -124,7 +125,7 @@ class Yasp(GenericObject):
 			self.exec_download()
 			self.no_install = True
 			return
-  
+
 	def set_defaults(self):
 		for d in Yasp._defaults:
 			if self.__getattr__(d) is None:
@@ -162,8 +163,8 @@ class Yasp(GenericObject):
 			print('[i] config written to', _cfg_filename, file=sys.stderr)
 			return Yasp._break
 
-		if self.query:
-			return Yasp._break
+		# if self.query:
+		#	return Yasp._break
 
 		return Yasp._continue
 
@@ -228,12 +229,15 @@ class Yasp(GenericObject):
 				self.workdir = os.path.join(self.workdir, self.recipe)
 				self.builddir = os.path.join(self.workdir, 'build')
 				self.output_script = os.path.join(self.workdir, 'build.sh')
+				if self.same_prefix is False:
+					self.prefix = os.path.join(self.prefix, self.recipe)
 				if self.valid:
 					self.makedirs()
 					self.make_replacements()
-					if self.dry_run:
-						print(f'[i] this is dry run - stopping before executing {self.output_script}')	
-						print(self, file=sys.stderr)
+					if self.dry_run or self.query:
+						if self.dry_run:
+							print(f'[i] this is dry run - stopping before executing {self.output_script}')
+							print(self, file=sys.stderr)
 					else:
 						_p = None
 						try:
@@ -378,6 +382,7 @@ class Yasp(GenericObject):
 
 def yasp_feature(what, args={}):
 	sb = Yasp(args=args)
+	sb.run()
 	try:
 		rv = sb.__getattr__(what)
 	except:
@@ -386,11 +391,13 @@ def yasp_feature(what, args={}):
 
 def yasp_find_files(fname, args={}):
 	sb = Yasp(args=args)
+	sb.run()
 	rv = find_files(sb.prefix, fname)
 	return rv
 
 def yasp_find_files_dirnames(fname, args={}):
 	sb = Yasp(args=args)
+	sb.run()
 	files = find_files(sb.prefix, fname)
 	# make unique list
 	rv = [os.path.dirname(f) for f in files]
@@ -415,19 +422,20 @@ def main():
 	parser.add_argument('--recipe-dir', help='dir where recipes info sit - default: {}'.format(Yasp._default_recipe_dir), type=str)
 	parser.add_argument('-o', '--output', help='output definition - for example for download', default='default.output', type=str)
 	parser.add_argument('--prefix', help='prefix of the installation {}'.format(Yasp._default_prefix))
+	parser.add_argument('--same-prefix', help='if this is true all install will go into the same prefix - default is {}/package-with-version'.format(Yasp._same_prefix), action='store_true', default=False)
 	parser.add_argument('-w', '--workdir', help='set the work dir for the setup - default is {}'.format(Yasp._default_workdir), type=str)
 	parser.add_argument('-g', '--debug', '--verbose', help='print some extra info', action='store_true', default=False)
 	parser.add_argument('-l', '--list', help='list recipes', action='store_true', default=False)
 	parser.add_argument('--donwload-command', help='overwrite download command - default is wget; could be curl', type=str, default=None)
 	parser.add_argument('-q', '--query', help='query for a feature or files or directory for a file - join with feature <name> files <pattern> or dirs <pattern> (where file located) to match a query - "PseudoJet.hh" for example', type=str, default=None, nargs=2)
 	args = parser.parse_args()
-  
+
 	sb = Yasp(args=args)
 	if args.cleanup:
 		if os.path.exists(sb.workdir):
 			shutil.rmtree(sb.workdir)
 		return
-  
+
 	if args.query:
 		q = args.query
 		if q[0] == 'feature':
