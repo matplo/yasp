@@ -91,13 +91,14 @@ class Yasp(GenericObject):
 	_break = 'stop'
 	_continue = 'continue'
 	_same_prefix = False
+	_this_file = os.path.abspath(__file__)
 	_prog_name = os.path.splitext(os.path.basename(__file__))[0]
 	_default_config = os.path.join(os.path.dirname(__file__), '.yasp.yaml')
 	_default_recipe_dir = os.path.join(get_this_directory(), 'recipes')
 	_default_prefix = os.path.join(os.getenv('HOME'), _prog_name)
 	_default_workdir = os.path.join(os.getenv('HOME'), _prog_name, '.workdir')
 	_defaults = {
-			f'{_prog_name}' : __file__,
+			f'{_prog_name}' : _this_file,
             'default_config' : _default_config,
             'recipe_dir' : _default_recipe_dir,
             'prefix' : _default_prefix,
