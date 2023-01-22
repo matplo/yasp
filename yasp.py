@@ -505,7 +505,8 @@ def main():
 				print(d, file=sys.stdout)
 		return
 
-	if args.install or args.debug:
+	# if args.install or args.debug:
+	if args.debug:
 		print(sb)
 
 	# sb.run()
