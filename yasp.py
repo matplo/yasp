@@ -125,6 +125,9 @@ class Yasp(GenericObject):
 			self.exec_download()
 			self.no_install = True
 			return
+		self.base_prefix 	= self.prefix
+		self.base_workdir 	= self.workdir
+		self.run()
 
 	def set_defaults(self):
 		for d in Yasp._defaults:
@@ -149,7 +152,7 @@ class Yasp(GenericObject):
 
 		if self.configure:
 			_out_dict = {}
-			_ignore_keys = ['debug', 'list', 'cleanup', 'install', 'download', "redownload",
+			_ignore_keys = ['debug', 'list', 'cleanup', 'install', 'download', "redownload", 'yes',
 					'dry_run', 'configure', 'use_config', 'clean', 'output', 'args', 'known_recipes', 'used_config', 'verbose', 'query']
 			for k in self.__dict__:
 				if k in _ignore_keys:
@@ -162,9 +165,6 @@ class Yasp(GenericObject):
 				_ = yaml.dump(_out_dict, f)
 			print('[i] config written to', _cfg_filename, file=sys.stderr)
 			return Yasp._break
-
-		# if self.query:
-		#	return Yasp._break
 
 		return Yasp._continue
 
@@ -227,50 +227,68 @@ class Yasp(GenericObject):
 			return
 		if type(self.install) is str:
 			self.install = [self.install]
+		print(self.install)
 		for _recipe in self.install:
+			self.prefix = self.base_prefix
+			print(self.base_prefix, self.prefix)
 			self.recipe = _recipe
 			self.fix_recipe_scriptname()
 			if self.recipe:
 				self.get_from_environment()
 				# handle the script
 				if not os.path.isfile(self.recipe_file):
-					print('[e] recipe file', self.recipe_file,
-					      'does not exist or not a file', file=sys.stderr)
+					print('[e] recipe file', self.recipe_file, 'does not exist or not a file', file=sys.stderr)
 					self.valid = False
-					return
+					continue
 				else:
 					if self.verbose:
 						print('[i] script specified exists:', self.recipe_file, file=sys.stderr)
 					self.valid = True
-				self.workdir = os.path.join(self.workdir, self.recipe)
+				self.workdir = os.path.join(self.base_workdir, self.recipe)
 				self.builddir = os.path.join(self.workdir, 'build')
 				self.output_script = os.path.join(self.workdir, 'build.sh')
 				if self.same_prefix is False:
 					self.prefix = os.path.join(self.prefix, self.recipe)
 				if self.valid:
+					self.module_recipe = self.recipe_file.replace('.sh', '.module')
+					if os.path.isfile(self.module_recipe):
+						self.module_output_fname = os.path.join(self.base_prefix, 'modules', self.recipe.replace('.sh', ''))
+						self.module_contents = self.process_replacements(self.module_recipe)
+						self.module_dir = os.path.dirname(self.module_output_fname)
 					self.makedirs()
-					self.make_replacements()
+					self.build_script_contents = self.process_replacements(self.recipe_file)
 					if self.cleanup:
 						self.do_cleanup()
-						return
+						continue
 					if self.clean:
 						self.do_clean()
-						return
+						continue
 					if self.dry_run or self.query:
 						if self.dry_run:
 							print(f'[i] this is dry run - stopping before executing {self.output_script}')
 							print(self, file=sys.stderr)
-					else:
-						_p = None
-						try:
-							_p = subprocess.run([self.output_script], check=True)
-						except subprocess.CalledProcessError as exc:
-							print(f"{self.output_script} returned {exc.returncode}\n{exc}")
-						if _p:
-							print(f'[i] {self.output_script} returned {_p.returncode}')
+						continue
+
+					if self.module_only:
+						if self.module_output_fname:
+							self.write_output_file(self.module_output_fname, self.module_contents, executable=False)
+						continue
+
+					# execute the shell build script
+					self.write_output_file(self.output_script, self.build_script_contents, executable=True)
+					_p = None
+					try:
+						_p = subprocess.run([self.output_script], check=True)
+					except subprocess.CalledProcessError as exc:
+						print(f"{self.output_script} returned {exc.returncode}\n{exc}")
+					if _p:
+						print(f'[i] {self.output_script} returned {_p.returncode}')
+
+					if self.module and self.module_output_fname:
+						self.write_output_file(self.module_output_fname, self.module_contents, executable=False)
 
 	def rm_dir_with_confirm(self, sdir):
-		if os.path.exists(sdir):
+		if os.path.isdir(sdir):
 			if self.user_confirm(f'remove {sdir}', 'y') == 'yes':
 				if self.dry_run:
 					print(f'[i] not removing since dry run is flag is set to: {self.dry_run}')
@@ -279,6 +297,8 @@ class Yasp(GenericObject):
 					shutil.rmtree(sdir)
 
 	def do_clean(self):
+		if self.module_dir:
+			self.rm_dir_with_confirm(self.module_dir)
 		self.rm_dir_with_confirm(self.builddir)
 		self.rm_dir_with_confirm(self.prefix)
 
@@ -286,15 +306,17 @@ class Yasp(GenericObject):
 		self.rm_dir_with_confirm(self.workdir)
 
 	def makedirs(self):
+		if self.module_dir:
+			os.makedirs(self.module_dir, exist_ok=True)
+		os.makedirs(self.builddir, exist_ok=True)
 		if os.makedirs(self.workdir, exist_ok=True):
 			os.chdir(self.workdir)
-		os.makedirs(self.builddir, exist_ok=True)
 
-	def get_contents(self):
-		with open(self.recipe_file, 'r') as f:
-			# self.contents = [_l.strip('\n') for _l in f.readlines()]
-			self.contents = f.readlines()
-		return self.contents
+	def get_file_contents(self, fname):
+		_contents = []
+		with open(fname, 'r') as f:
+			_contents = f.readlines()
+		return _contents
 
 	def get_definitions(self, _lines):
 		ret_dict = {}
@@ -337,8 +359,8 @@ class Yasp(GenericObject):
 				replaced = True
 		return newl, replaced
 
-	def make_replacements(self):
-		_contents = self.get_contents()
+	def process_replacements(self, input_file):
+		_contents = self.get_file_contents(input_file)
 		_definitions = self.get_definitions(_contents)
 		if self.verbose:
 			print('[i] definitions:', _definitions)
@@ -353,12 +375,15 @@ class Yasp(GenericObject):
 			while replaced:
 				newl, replaced = self.replace_in_line(newl, _definitions, _replacements)
 			new_contents.append(newl)
-		with open(self.output_script, 'w') as f:
-			f.writelines(new_contents)
-		if self.verbose:
-			print('[i] written:', self.output_script, file=sys.stderr)
-		os.chmod(self.output_script, stat.S_IRWXU)
-		pass
+		return new_contents
+
+	def write_output_file(self, outfname, contents, executable=False):
+		with open(outfname, 'w') as f:
+			f.writelines(contents)
+		# if self.verbose:
+		print('[i] written:', outfname, file=sys.stderr)
+		if executable:
+			os.chmod(outfname, stat.S_IRWXU)
 
 	def exec_cmnd(self, cmnd):
 		if self.verbose:
@@ -415,7 +440,6 @@ class Yasp(GenericObject):
 
 def yasp_feature(what, args={}):
 	sb = Yasp(args=args)
-	sb.run()
 	try:
 		rv = sb.__getattr__(what)
 	except:
@@ -424,13 +448,11 @@ def yasp_feature(what, args={}):
 
 def yasp_find_files(fname, args={}):
 	sb = Yasp(args=args)
-	sb.run()
 	rv = find_files(sb.prefix, fname)
 	return rv
 
 def yasp_find_files_dirnames(fname, args={}):
 	sb = Yasp(args=args)
-	sb.run()
 	files = find_files(sb.prefix, fname)
 	# make unique list
 	rv = [os.path.dirname(f) for f in files]
@@ -462,6 +484,8 @@ def main():
 	parser.add_argument('--donwload-command', help='overwrite download command - default is wget; could be curl', type=str, default=None)
 	parser.add_argument('-q', '--query', help='query for a feature or files or directory for a file - join with feature <name> files <pattern> or dirs <pattern> (where file located) to match a query - "PseudoJet.hh" for example', type=str, default=None, nargs=2)
 	parser.add_argument('-y', '--yes', help='answer yes to any questions - in particular, on --clean so', action='store_true', default=False)
+	parser.add_argument('-m', '--module', help='write module file', action='store_true', default=False)
+	parser.add_argument('--module-only', help='write module file and exit', action='store_true', default=False)
 	args = parser.parse_args()
 
 	sb = Yasp(args=args)
@@ -483,7 +507,7 @@ def main():
 	if args.install or args.debug:
 		print(sb)
 
-	sb.run()
+	# sb.run()
 
 
 if __name__=="__main__":
