@@ -106,7 +106,7 @@ class Yasp(GenericObject):
             'prefix' : _default_prefix,
             'workdir' : _default_workdir,
 			'download_command' : 'wget',
-			'python' : sys.executable,
+			'python' : os.path.abspath(os.path.realpath(sys.executable)),
 			'yasp_dir' : _yasp_dir
 	}
 
