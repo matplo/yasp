@@ -157,7 +157,7 @@ class Yasp(GenericObject):
 
 		if self.configure:
 			_out_dict = {}
-			_ignore_keys = ['debug', 'list', 'cleanup', 'install', 'download', "redownload", 'yes',
+			_ignore_keys = ['debug', 'list', 'cleanup', 'install', 'download', "redownload", 'yes', 'module', 'module_only',
 					'dry_run', 'configure', 'use_config', 'clean', 'output', 'args', 'known_recipes', 'used_config', 'verbose', 'query']
 			for k in self.__dict__:
 				if k in _ignore_keys:
@@ -497,10 +497,23 @@ def main():
 	parser.add_argument('-y', '--yes', help='answer yes to any questions - in particular, on --clean so', action='store_true', default=False)
 	parser.add_argument('-m', '--module', help='write module file', action='store_true', default=False)
 	parser.add_argument('--module-only', help='write module file and exit', action='store_true', default=False)
-	parser.add_argument('--python', help='specify python executable - default is current {}'.format(sys.executable), default=sys.executable)
+	parser.add_argument('--use-python', help='specify python executable - default is current {}'.format(sys.executable), default=sys.executable)
 	args = parser.parse_args()
 
 	sb = Yasp(args=args)
+ 
+	if os.path.samefile(os.path.abspath(os.path.realpath(sys.executable)), sb.python) is False:
+		print('[w] looks like yasp called with different python than configured with...', file=sys.stderr)
+		print('    this python is [', sys.executable, 	']', file=sys.stderr)
+		print('    yasp python is [', sb.python, 		']', file=sys.stderr)
+		if sb.user_confirm('execute with yasp python?', 'y') == 'yes':
+			cmnd = '{} {}'.format(sb.python, ' '.join(sys.argv))
+			print(f'[i] executing: {cmnd}')
+			out, err, rc = sb.exec_cmnd(cmnd)
+			print(out)
+			exit(rc)
+		else:
+			exit(1)
 
 	if args.query:
 		q = args.query
