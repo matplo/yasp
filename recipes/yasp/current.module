@@ -1,0 +1,5 @@
+#%Module
+set YASP_DIR {{prefix}}
+prepend-path PATH {{prefix}}/bin
+set-alias yasp_python {{python}}
+set-alias yasp_cd "cd {{yasp_dir}}"

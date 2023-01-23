@@ -11,7 +11,8 @@ import fnmatch
 import yaml
 
 def get_this_directory():
-	return os.path.dirname(os.path.abspath(__file__))
+	_this_file = os.path.dirname(os.path.realpath(os.path.abspath(__file__)))
+	return _this_file
 
 
 def find_files(rootdir='.', pattern='*'):
@@ -92,8 +93,9 @@ class Yasp(GenericObject):
 	_continue = 'continue'
 	_same_prefix = False
 	_this_file = os.path.abspath(__file__)
+	_yasp_dir = get_this_directory()
 	_prog_name = os.path.splitext(os.path.basename(__file__))[0]
-	_default_config = os.path.join(os.path.dirname(__file__), '.yasp.yaml')
+	_default_config = os.path.join(get_this_directory(), '.yasp.yaml')
 	_default_recipe_dir = os.path.join(get_this_directory(), 'recipes')
 	_default_prefix = os.path.join(os.getenv('HOME'), _prog_name)
 	_default_workdir = os.path.join(os.getenv('HOME'), _prog_name, '.workdir')
@@ -103,7 +105,9 @@ class Yasp(GenericObject):
             'recipe_dir' : _default_recipe_dir,
             'prefix' : _default_prefix,
             'workdir' : _default_workdir,
-			'download_command' : 'wget'
+			'download_command' : 'wget',
+			'python' : sys.executable,
+			'yasp_dir' : _yasp_dir
 	}
 
 	def __init__(self, **kwargs):
@@ -450,6 +454,9 @@ def yasp_feature(what, args={}):
 def yasp_find_files(fname, args={}):
 	sb = Yasp(args=args)
 	rv = find_files(sb.prefix, fname)
+	for s in rv:
+		if sb.workdir in s:
+			rv.remove(s)
 	return rv
 
 def yasp_find_files_dirnames(fname, args={}):
@@ -461,6 +468,9 @@ def yasp_find_files_dirnames(fname, args={}):
 	for d in rv:
 		if d not in urv:
 			urv.append(d)
+	for s in urv:
+		if sb.workdir in s:
+			urv.remove(s)
 	return urv
 
 def main():
@@ -487,6 +497,7 @@ def main():
 	parser.add_argument('-y', '--yes', help='answer yes to any questions - in particular, on --clean so', action='store_true', default=False)
 	parser.add_argument('-m', '--module', help='write module file', action='store_true', default=False)
 	parser.add_argument('--module-only', help='write module file and exit', action='store_true', default=False)
+	parser.add_argument('--python', help='specify python executable - default is current {}'.format(sys.executable), default=sys.executable)
 	args = parser.parse_args()
 
 	sb = Yasp(args=args)
