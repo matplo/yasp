@@ -3,4 +3,4 @@ set YASP_DIR {{prefix}}
 prepend-path PATH {{prefix}}/bin
 set-alias yasp_python {{python}}
 set-alias yasp_cd "cd {{yasp_dir}}"
-set-alias yaspenv "{{yasp_dir}}/activate.sh"
+set-alias yaspenv "{{yasp_dir}}/yaspenv.sh"
