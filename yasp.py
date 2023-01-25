@@ -312,7 +312,7 @@ class Yasp(GenericObject):
 		if self.module_dir:
 			self.rm_dir_with_confirm(self.module_dir)
 		if self.builddir:
-		self.rm_dir_with_confirm(self.builddir)
+			self.rm_dir_with_confirm(self.builddir)
 		if self.srcdir:
 			self.rm_dir_with_confirm(self.srcdir)
 		if self.prefix:
