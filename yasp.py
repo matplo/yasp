@@ -35,6 +35,7 @@ def get_eq_val(s):
 
 
 class GenericObject(object):
+	max_chars = 500
 	def __init__(self, **kwargs):
 		for key, value in kwargs.items():
 			self.__setattr__(key, value)
@@ -64,8 +65,8 @@ class GenericObject(object):
 			if a[0] == '_':
 				continue
 			sval = str(getattr(self, a))
-			if len(sval) > 200:
-				sval = sval[:196] + '...'
+			if len(sval) > self.max_chars:
+				sval = sval[:self.max_chars-4] + '...'
 			s.append('   {} = {}'.format(str(a), sval))
 		return '\n'.join(s)
 
@@ -256,12 +257,14 @@ class Yasp(GenericObject):
 					self.prefix = os.path.join(self.prefix, self.recipe)
 				if self.valid:
 					self.module_recipe = self.recipe_file.replace('.sh', '.module')
+					self.build_script_contents = self.process_replacements(self.recipe_file)
+					self.build_script_contents = self.process_yasp_tags(self.build_script_contents)
 					if os.path.isfile(self.module_recipe):
 						self.module_output_fname = os.path.join(self.base_prefix, 'modules', self.recipe.replace('.sh', ''))
 						self.module_contents = self.process_replacements(self.module_recipe)
+						self.module_contents = self.process_yasp_tags(self.module_contents)
 						self.module_dir = os.path.dirname(self.module_output_fname)
 					self.makedirs()
-					self.build_script_contents = self.process_replacements(self.recipe_file)
 					if self.cleanup:
 						self.do_cleanup()
 						continue
@@ -369,16 +372,18 @@ class Yasp(GenericObject):
 		_definitions = self.get_definitions(_contents)
 		if self.verbose:
 			print('[i] definitions:', _definitions)
-		_replacements = self.get_replacements(_contents)
+		if self.replacements is None:
+			self.replacements = []
+		self.replacements.extend(self.get_replacements(_contents))
 		if self.verbose:
-			print('[i] number of replacements found', len(_replacements))
-			print('   ', _replacements)
+			print('[i] number of replacements found', len(self.replacements))
+			print('   ', self.replacements)
 		new_contents = []
 		for l in _contents:
 			newl = l
 			replaced = True
 			while replaced:
-				newl, replaced = self.replace_in_line(newl, _definitions, _replacements)
+				newl, replaced = self.replace_in_line(newl, _definitions, self.replacements)
 			new_contents.append(newl)
 		return new_contents
 
@@ -390,12 +395,12 @@ class Yasp(GenericObject):
 		if executable:
 			os.chmod(outfname, stat.S_IRWXU)
 
-	def exec_cmnd(self, cmnd):
+	def exec_cmnd(self, cmnd, shell=False):
 		if self.verbose:
 			print('[i] calling', cmnd, file=sys.stderr)
 		args = shlex.split(cmnd)
 		try:
-			p = subprocess.Popen(args, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			p = subprocess.Popen(args, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 			out, err = p.communicate()
 		except OSError as e:
 			out = 'Failed.'
@@ -406,6 +411,33 @@ class Yasp(GenericObject):
 			print('    err:',err, file=sys.stderr)
 			print('     rc:', rc, file=sys.stderr)
 		return out, err, rc
+
+	def extract_shell_var(self, s):
+		_var = s.split('=')[0].split()[-1]
+		_shell_expr = s.split('=')[1]
+		_value = _shell_expr
+		return _var, _value
+  
+	def process_yasp_tags(self, slines):
+		_rv = []
+		for l in slines:
+			# stay passive - do not replace anything
+			_rv.append(l)
+			if l.split(' ')[0] == '#yasp':
+				if l.split(' ')[1] == '--shell-var':
+					_rest = ' '.join(l.split(' ')[1:]).strip('\n')
+					_var, _cmnd = self.extract_shell_var(_rest)
+					if self.verbose:
+						print('extracted:', _cmnd, file=sys.stderr)
+					out, err, rc = self.exec_cmnd(_cmnd, shell=True)
+					if err or rc != 0:
+						print(f'[e] extract {_var} failed', file=sys.stderr)
+						print(f'{err}', file=sys.stderr)
+					else:
+						_val = out.decode('utf-8').strip('\n')
+						self.__setattr__(_var, _val)
+						_rv.append(f'# yasp var imported: {_var}={_val}')
+		return _rv
 
 	def test_exec(self):
 		if self.verbose:
