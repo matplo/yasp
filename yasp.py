@@ -106,9 +106,11 @@ class Yasp(GenericObject):
             'recipe_dir' : _default_recipe_dir,
             'prefix' : _default_prefix,
             'workdir' : _default_workdir,
-			'download_command' : 'wget',
+			'download_command' : 'wget --no-check-certificate',
 			'python' : os.path.abspath(os.path.realpath(sys.executable)),
-			'yasp_dir' : _yasp_dir
+			'yasp_dir' : _yasp_dir,
+			'python_version' : f'{sys.version_info.major}.{sys.version_info.minor}',
+			'python_site_packages_subpath' : f'python{sys.version_info.major}.{sys.version_info.minor}/site-packages'
 	}
 
 	def __init__(self, **kwargs):
@@ -233,10 +235,8 @@ class Yasp(GenericObject):
 			return
 		if type(self.install) is str:
 			self.install = [self.install]
-		print(self.install)
 		for _recipe in self.install:
 			self.prefix = self.base_prefix
-			print(self.base_prefix, self.prefix)
 			self.recipe = _recipe
 			self.fix_recipe_scriptname()
 			if self.recipe:
@@ -439,6 +439,13 @@ class Yasp(GenericObject):
 						_val = out.decode('utf-8').strip('\n')
 						self.__setattr__(_var, _val)
 						_rv.append(f'# yasp var imported: {_var}={_val}')
+			if l.split(' ')[0] == '#yasp':
+				if l.split(' ')[1] == '--set':
+					_rest = ' '.join(l.split(' ')[1:]).strip('\n')
+					_var, val = self.extract_shell_var(_rest)
+					if self.verbose:
+						print('extracted:', _cmnd, file=sys.stderr)
+					self.__setattr__(_var, _val)					
 		return _rv
 
 	def test_exec(self):
@@ -462,16 +469,15 @@ class Yasp(GenericObject):
 			return 0
 		print(f'[i] downloading {self.download}', file=sys.stderr)
 		_opt = '-O'
-		if self.dowload_command == 'wget':
+		if 'wget' in self.download_command:
 			_opt = '-O'
-		if self.dowload_command == 'curl':
+		if 'curl' in self.download_command:
 			_opt = '-o'
 		out, err, rc = self.exec_cmnd('{} {} {} {}'.format(self.download_command, _opt, self.output, self.download))
-		if rc > 0:
+		if rc > 0 or self.verbose:
 			print('[i] returning error={}'.format(rc), file=sys.stderr)
-		if self.verbose:
-			print(' download output:', out, sys.stderr)
-			print(' download error :', err, sys.stderr)
+			print(' download output:', out, file=sys.stderr)
+			print(' download error :', err, file=sys.stderr)
 		if os.path.isfile(self.output):
 			print('[i] output file:', self.output, file=sys.stderr)
 		return rc
@@ -526,7 +532,7 @@ def main():
 	parser.add_argument('-w', '--workdir', help='set the work dir for the setup - default is {}'.format(Yasp._default_workdir), type=str)
 	parser.add_argument('-g', '--debug', '--verbose', help='print some extra info', action='store_true', default=False)
 	parser.add_argument('-l', '--list', help='list recipes', action='store_true', default=False)
-	parser.add_argument('--donwload-command', help='overwrite download command - default is wget; could be curl', type=str, default=None)
+	parser.add_argument('--download-command', help='overwrite download command - default is wget; could be curl', type=str, default=None)
 	parser.add_argument('-q', '--query', help='query for a feature or files or directory for a file - join with feature <name> files <pattern> or dirs <pattern> (where file located) to match a query - "PseudoJet.hh" for example', type=str, default=None, nargs=2)
 	parser.add_argument('-y', '--yes', help='answer yes to any questions - in particular, on --clean so', action='store_true', default=False)
 	parser.add_argument('-m', '--module', help='write module file', action='store_true', default=False)
