@@ -98,8 +98,10 @@ class Yasp(GenericObject):
 	_prog_name = os.path.splitext(os.path.basename(__file__))[0]
 	_default_config = os.path.join(get_this_directory(), '.yasp.yaml')
 	_default_recipe_dir = os.path.join(get_this_directory(), 'recipes')
-	_default_prefix = os.path.join(os.getenv('HOME'), _prog_name)
-	_default_workdir = os.path.join(os.getenv('HOME'), _prog_name, '.workdir')
+	# _default_prefix = os.path.join(os.getenv('HOME'), _prog_name)
+	_default_prefix = os.path.join(get_this_directory(), 'software')
+	# _default_workdir = os.path.join(os.getenv('HOME'), _prog_name, '.workdir')
+	_default_workdir = os.path.join(get_this_directory(), '.workdir')
 	_defaults = {
 			f'{_prog_name}' : _this_file,
             'default_config' : _default_config,
@@ -267,11 +269,11 @@ class Yasp(GenericObject):
 						self.module_contents = self.process_replacements(self.module_recipe) # yes has to do it twice
 						self.module_dir = os.path.dirname(self.module_output_fname)
 					self.makedirs()
-					if self.cleanup:
-						self.do_cleanup()
-						continue
-					if self.clean:
-						self.do_clean()
+					if self.cleanup or self.clean:
+						if self.cleanup:
+							self.do_cleanup()
+						if self.clean:
+							self.do_clean()
 						continue
 					if self.dry_run or self.query:
 						if self.dry_run:
@@ -309,11 +311,16 @@ class Yasp(GenericObject):
 	def do_clean(self):
 		if self.module_dir:
 			self.rm_dir_with_confirm(self.module_dir)
+		if self.builddir:
 		self.rm_dir_with_confirm(self.builddir)
-		self.rm_dir_with_confirm(self.prefix)
+		if self.srcdir:
+			self.rm_dir_with_confirm(self.srcdir)
+		if self.prefix:
+			self.rm_dir_with_confirm(self.prefix)
 
 	def do_cleanup(self):
-		self.rm_dir_with_confirm(self.workdir)
+		if self.workdir:
+			self.rm_dir_with_confirm(self.workdir)
 
 	def makedirs(self):
 		if self.module_dir:
