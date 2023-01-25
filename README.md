@@ -4,6 +4,9 @@ Yet Another Software Package[r]
 
 # help output
 
+- run `./yasp.h -h` on your system - output below might change...
+- first check the recommendation on initial setup...
+
 ```
 > ./yasp.py -h
 usage: yasp.py [-h] [--configure] [--use-config USE_CONFIG] [--yasp YASP] [--cleanup] [-i INSTALL [INSTALL ...]] [-d DOWNLOAD] [--clean] [--redownload] [--dry-run]
