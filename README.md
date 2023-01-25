@@ -61,7 +61,7 @@ optional arguments:
 or 
 
 ```
-./yaspenv.sh --prefix <where you want your packages> [any other opts]
+./yaspenv.sh --prefix <where you want your packages> --workdir /tmp/yasp [any other opts]
 ```
 
 - this will setup yasp --prefix dir (writing also a config file `.yasp.yaml`); note the default prefix is $HOME/yasp
