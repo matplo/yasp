@@ -1,0 +1,4 @@
+#%Module
+set CPPYY_PATH {{python_path_cppyy}}
+prepend-path PYTHONPATH {{python_path_cppyy}}
+conflict root
