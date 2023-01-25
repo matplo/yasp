@@ -259,10 +259,12 @@ class Yasp(GenericObject):
 					self.module_recipe = self.recipe_file.replace('.sh', '.module')
 					self.build_script_contents = self.process_replacements(self.recipe_file)
 					self.build_script_contents = self.process_yasp_tags(self.build_script_contents)
+					self.build_script_contents = self.process_replacements(self.recipe_file) # yes has to do it twice
 					if os.path.isfile(self.module_recipe):
 						self.module_output_fname = os.path.join(self.base_prefix, 'modules', self.recipe.replace('.sh', ''))
 						self.module_contents = self.process_replacements(self.module_recipe)
 						self.module_contents = self.process_yasp_tags(self.module_contents)
+						self.module_contents = self.process_replacements(self.module_recipe) # yes has to do it twice
 						self.module_dir = os.path.dirname(self.module_output_fname)
 					self.makedirs()
 					if self.cleanup:
