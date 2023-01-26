@@ -277,8 +277,9 @@ class Yasp(GenericObject):
 						continue
 					if self.dry_run or self.query:
 						if self.dry_run:
-							print(f'[i] this is dry run - stopping before executing {self.output_script}')
-							print(self, file=sys.stderr)
+							if self.verbose:
+								print(f'[i] this is dry run - stopping before executing {self.output_script}', file=sys.stderr)
+								print(self, file=sys.stderr)
 						continue
 
 					if self.module_only:
@@ -426,7 +427,7 @@ class Yasp(GenericObject):
 		_shell_expr = s.split('=')[1]
 		_value = _shell_expr
 		return _var, _value
-  
+
 	def process_yasp_tags(self, slines):
 		_rv = []
 		for l in slines:
@@ -449,10 +450,10 @@ class Yasp(GenericObject):
 			if l.split(' ')[0] == '#yasp':
 				if l.split(' ')[1] == '--set':
 					_rest = ' '.join(l.split(' ')[1:]).strip('\n')
-					_var, val = self.extract_shell_var(_rest)
+					_var, _val = self.extract_shell_var(_rest)
 					if self.verbose:
 						print('extracted:', _cmnd, file=sys.stderr)
-					self.__setattr__(_var, _val)					
+					self.__setattr__(_var, _val)
 		return _rv
 
 	def test_exec(self):
@@ -490,6 +491,7 @@ class Yasp(GenericObject):
 		return rc
 
 
+		
 def yasp_feature(what, args={}):
 	sb = Yasp(args=args)
 	try:
@@ -498,6 +500,7 @@ def yasp_feature(what, args={}):
 		rv = None
 	return rv
 
+
 def yasp_find_files(fname, args={}):
 	sb = Yasp(args=args)
 	rv = find_files(sb.prefix, fname)
@@ -505,6 +508,7 @@ def yasp_find_files(fname, args={}):
 		if sb.workdir in s:
 			rv.remove(s)
 	return rv
+    
 
 def yasp_find_files_dirnames(fname, args={}):
 	sb = Yasp(args=args)
@@ -520,14 +524,14 @@ def yasp_find_files_dirnames(fname, args={}):
 			urv.remove(s)
 	return urv
 
-def main():
-	parser = argparse.ArgumentParser()
+
+def add_arguments_to_parser(parser):
 	# group = parser.add_mutually_exclusive_group(required=True)
 	parser.add_argument('--configure', help='set and write default configuration', default=False, action='store_true')
 	parser.add_argument('--use-config', help='use particular configuration file - default=$PWD/.yasp.yaml', default=None, type=str)
 	parser.add_argument(f'--{Yasp._prog_name}', help=f'point to {Yasp._prog_name}.py executable - default: this script')
 	parser.add_argument('--cleanup', help='clean the main workdir (downloaded and build items)', action='store_true', default=False)
-	parser.add_argument('-i', '--install', help='name of the recipe to process', type=str, nargs='+')
+	parser.add_argument('-i', '-r', '--install', '--recipes', help='name of the recipe to process', type=str, nargs='+')
 	parser.add_argument('-d', '--download', help='download file', type=str)
 	parser.add_argument('--clean', help='start from scratch', action='store_true', default=False)
 	parser.add_argument('--redownload', help='redownload even if file already there', action='store_true', default=False)
@@ -545,10 +549,56 @@ def main():
 	parser.add_argument('-m', '--module', help='write module file', action='store_true', default=False)
 	parser.add_argument('--module-only', help='write module file and exit', action='store_true', default=False)
 	parser.add_argument('--use-python', help='specify python executable - default is current {}'.format(sys.executable), default=sys.executable)
+
+def yasp_args(*argv):
+	s = ' '.join(argv)
+	parser = argparse.ArgumentParser(prog='none', help="no help here")
+	add_arguments_to_parser(parser)
+	args = parser.parse_args(s.split())
+	return args	
+
+
+def features(what, *packages):
+	features = []
+	for _pack in packages:
+		sargs = f'-r {_pack} --dry-run'
+		parser = argparse.ArgumentParser(prog='none')
+		add_arguments_to_parser(parser)
+		args = parser.parse_args(sargs.split())
+		features.append(yasp_feature(what, args))
+	return features		
+
+def yasp_find_files_dirnames_in_packages(files, *packages):
+	_dirs = []
+	_arg_arr = []
+	for fn in files:
+		if len(packages) < 1:
+			_args = f'-q dirs {fn}'
+			_arg_arr.append(_args)
+		else:
+			for p in packages:
+				_args = f'-q dirs {fn} -r {p[0]}'
+				_arg_arr.append(_args)
+	print (_arg_arr)
+	for _arg in _arg_arr:
+		parser = argparse.ArgumentParser(prog='none')
+		add_arguments_to_parser(parser)
+		args = parser.parse_args(_arg.split())
+		for fname in files:
+			_ds = yasp_find_files_dirnames(fname, args)
+			for d in _ds:
+				if d not in _dirs:
+					_dirs.append(d)
+	return _dirs
+	
+ 
+def main():
+	parser = argparse.ArgumentParser()
+	add_arguments_to_parser(parser)
 	args = parser.parse_args()
 
 	sb = Yasp(args=args)
- 
+
 	if os.path.samefile(os.path.abspath(os.path.realpath(sys.executable)), sb.python) is False:
 		print('[w] looks like yasp called with different python than configured with...', file=sys.stderr)
 		print('    this python is [', sys.executable, 	']', file=sys.stderr)

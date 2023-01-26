@@ -1,6 +1,9 @@
 #%Module
-setenv YASP_DIR {{prefix}}
+setenv YASP_DIR {{yasp_dir}}
+setenv YASP_PREFIX {{prefix}}
+setenv YASP_EXEC {{yasp}}
 prepend-path PATH {{prefix}}/bin
+prepend-path PYTHONPATH {{prefix}}/lib
 set-alias yasp_python {{python}}
 set-alias yasp_cd "cd {{yasp_dir}}"
 set-alias yaspenv "{{yasp_dir}}/yaspenv.sh"
