@@ -60,7 +60,7 @@ class GenericObject(object):
 
 	def __str__(self) -> str:
 		s = []
-		s.append('[i] {}'.format(str(self.__class__).split('.')[1].split('\'')[0]))
+		s.append('[i] {} ({})'.format(str(self.__class__).split('.')[1].split('\'')[0], id(self)))
 		for a in self.__dict__:
 			if a[0] == '_':
 				continue
