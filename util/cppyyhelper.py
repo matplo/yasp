@@ -8,7 +8,7 @@ class YaspCppyyHelper(yasp.GenericObject):
 	_instance = None
 	def __new__(cls):
 		if cls._instance is None:
-			print('[i] Creating the YaspCppyyHelper object')
+			print('[i] Creating YaspCppyyHelper singleton.', file=sys.stderr)
 			cls._instance = super(YaspCppyyHelper, cls).__new__(cls)
 		return cls._instance
 
