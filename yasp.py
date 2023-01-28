@@ -34,6 +34,21 @@ def get_eq_val(s):
 	return matches
 
 
+def is_iterable(o):
+	try:
+		_ = iter(o)
+	except TypeError as te:
+		return False
+	return True
+
+def is_subscriptable(o):
+	try:
+		_ = o[0]
+	except TypeError as te:
+		return False
+	return True
+
+
 class GenericObject(object):
 	max_chars = 500
 	def __init__(self, **kwargs):
@@ -408,14 +423,18 @@ class Yasp(GenericObject):
 	def exec_cmnd(self, cmnd, shell=False):
 		if self.verbose:
 			print('[i] calling', cmnd, file=sys.stderr)
-		args = shlex.split(cmnd)
+		_args = shlex.split(cmnd)
 		try:
-			p = subprocess.Popen(args, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			p = subprocess.Popen(_args, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 			out, err = p.communicate()
+			rc = p.returncode
 		except OSError as e:
-			out = 'Failed.'
-			err = ('Error #{0} : {1}').format(e[0], e[1])
-		rc = p.returncode
+			out = f'[e] failed to execute: f{_args}'
+			if is_subscriptable(e):
+				err = 'Error #{0} : {1}'.format(e[0], e[1])
+			else:
+				err = f'Error {e}'
+			rc = 255
 		if self.verbose:
 			print('    out:',out, file=sys.stderr)
 			print('    err:',err, file=sys.stderr)
@@ -491,6 +510,17 @@ class Yasp(GenericObject):
 		return rc
 
 
+	def find_files(self, fname):
+		return find_files(self.prefix, fname)
+
+
+	def find_dirs_files(self, fname):
+		_dirs = [os.path.dirname(f) for f in find_files(self.prefix, fname)]
+		dirs = []
+		for d in _dirs:
+			if d not in dirs:
+				dirs.append(d)
+		return dirs
 		
 def yasp_feature(what, args={}):
 	sb = Yasp(args=args)
@@ -550,9 +580,22 @@ def add_arguments_to_parser(parser):
 	parser.add_argument('--module-only', help='write module file and exit', action='store_true', default=False)
 	parser.add_argument('--use-python', help='specify python executable - default is current {}'.format(sys.executable), default=sys.executable)
 
+
+def str_to_args(s):
+	parser = argparse.ArgumentParser(prog='none')
+	add_arguments_to_parser(parser)
+	args = parser.parse_args(s.split())
+	return args
+
+
+def dry_yasp_from_str(s=''):
+	args = str_to_args(s + ' --dry-run')
+	return Yasp(args=args)
+
+
 def yasp_args(*argv):
 	s = ' '.join(argv)
-	parser = argparse.ArgumentParser(prog='none', help="no help here")
+	parser = argparse.ArgumentParser(prog='none')
 	add_arguments_to_parser(parser)
 	args = parser.parse_args(s.split())
 	return args	
@@ -562,33 +605,34 @@ def features(what, *packages):
 	features = []
 	for _pack in packages:
 		sargs = f'-r {_pack} --dry-run'
-		parser = argparse.ArgumentParser(prog='none')
-		add_arguments_to_parser(parser)
-		args = parser.parse_args(sargs.split())
-		features.append(yasp_feature(what, args))
+		sb = dry_yasp_from_str(sargs)
+		try:
+			rv = sb.__getattr__(what)
+		except:
+			rv = None
+		if rv:
+			features.append(rv)
 	return features		
+
 
 def yasp_find_files_dirnames_in_packages(files, *packages):
 	_dirs = []
-	_arg_arr = []
-	for fn in files:
-		if len(packages) < 1:
-			_args = f'-q dirs {fn}'
-			_arg_arr.append(_args)
-		else:
-			for p in packages:
-				_args = f'-q dirs {fn} -r {p[0]}'
-				_arg_arr.append(_args)
-	print (_arg_arr)
-	for _arg in _arg_arr:
-		parser = argparse.ArgumentParser(prog='none')
-		add_arguments_to_parser(parser)
-		args = parser.parse_args(_arg.split())
-		for fname in files:
-			_ds = yasp_find_files_dirnames(fname, args)
-			for d in _ds:
-				if d not in _dirs:
-					_dirs.append(d)
+	file_list = []
+	if type(files) is str:
+		file_list = [files]
+	else:
+		for fn in files:
+			file_list.append(fn)
+	for p in packages:
+		if len(p) < 1:
+			continue
+		y = dry_yasp_from_str(f"-r {p}")
+		for fn in file_list:
+			print('-- looking for', fn, 'in', p)
+			_ds = y.find_dirs_files(fn)
+			for _d in _ds:
+				if _d not in _dirs:
+					_dirs.append(_d)
 	return _dirs
 	
  
