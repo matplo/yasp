@@ -1,3 +1,4 @@
 /.workdir
 /software
 /__pycache__
+.yasp.yaml

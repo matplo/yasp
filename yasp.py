@@ -117,9 +117,11 @@ class Yasp(GenericObject):
 	_default_prefix = os.path.join(get_this_directory(), 'software')
 	# _default_workdir = os.path.join(os.getenv('HOME'), _prog_name, '.workdir')
 	_default_workdir = os.path.join(get_this_directory(), '.workdir')
+	_current_dir = os.path.realpath(os.getcwd())
 	_defaults = {
 			f'{_prog_name}' : _this_file,
             'default_config' : _default_config,
+		    'current_dir' : _current_dir,
             'recipe_dir' : _default_recipe_dir,
             'prefix' : _default_prefix,
             'workdir' : _default_workdir,
@@ -217,6 +219,7 @@ class Yasp(GenericObject):
 
 	def fix_recipe_scriptname(self):
 		if self.recipe:
+			self.recipe_dir = os.path.abspath(self.recipe_dir)
 			# self.recipe = self.recipe.replace('-', '/')
 			self.recipe = self.recipe.replace('==', '/')
 			self.recipe_file = os.path.join(self.recipe_dir, self.recipe)
@@ -376,6 +379,15 @@ class Yasp(GenericObject):
 				rv_matches.append(m.group(0).strip('\n'))
 		return rv_matches
 
+	def get_replacements_yasp_dot(self, _lines):
+		regex = r"{{yasp\.[a-zA-Z0-9_]+}}"
+		matches = re.finditer(regex, ''.join(_lines), re.MULTILINE)
+		rv_matches = []
+		for m in matches:
+			if m.group(0) not in rv_matches:
+				rv_matches.append(m.group(0).strip('\n'))
+		return rv_matches
+
 	def replace_in_line(self, l, _definitions, _replacements):
 		replaced = False
 		newl = l
@@ -385,6 +397,8 @@ class Yasp(GenericObject):
 				try:
 					_repls = _definitions[_tag+'=']
 				except KeyError:
+					if '.' in _tag:
+						_tag = _tag.split('.')[1]
 					_repls = str(self.__getattr__(_tag))
 				if _repls is None:
 					_repls = ""
@@ -394,12 +408,13 @@ class Yasp(GenericObject):
 
 	def process_replacements(self, input_file):
 		_contents = self.get_file_contents(input_file)
-		_definitions = self.get_definitions(_contents)
-		if self.verbose:
-			print('[i] definitions:', _definitions)
 		if self.replacements is None:
 			self.replacements = []
 		self.replacements.extend(self.get_replacements(_contents))
+		self.replacements.extend(self.get_replacements_yasp_dot(_contents))
+		_definitions = self.get_definitions(_contents)
+		if self.verbose:
+			print('[i] definitions:', _definitions)
 		if self.verbose:
 			print('[i] number of replacements found', len(self.replacements))
 			print('   ', self.replacements)
@@ -521,7 +536,7 @@ class Yasp(GenericObject):
 			if d not in dirs:
 				dirs.append(d)
 		return dirs
-		
+
 def yasp_feature(what, args={}):
 	sb = Yasp(args=args)
 	try:
@@ -538,7 +553,7 @@ def yasp_find_files(fname, args={}):
 		if sb.workdir in s:
 			rv.remove(s)
 	return rv
-    
+
 
 def yasp_find_files_dirnames(fname, args={}):
 	sb = Yasp(args=args)
@@ -598,7 +613,7 @@ def yasp_args(*argv):
 	parser = argparse.ArgumentParser(prog='none')
 	add_arguments_to_parser(parser)
 	args = parser.parse_args(s.split())
-	return args	
+	return args
 
 
 def features(what, *packages):
@@ -612,7 +627,7 @@ def features(what, *packages):
 			rv = None
 		if rv:
 			features.append(rv)
-	return features		
+	return features
 
 
 def yasp_find_files_dirnames_in_packages(files, *packages):
@@ -634,8 +649,8 @@ def yasp_find_files_dirnames_in_packages(files, *packages):
 				if _d not in _dirs:
 					_dirs.append(_d)
 	return _dirs
-	
- 
+
+
 def main():
 	parser = argparse.ArgumentParser()
 	add_arguments_to_parser(parser)
