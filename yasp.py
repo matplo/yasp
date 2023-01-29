@@ -50,7 +50,7 @@ def is_subscriptable(o):
 
 
 class GenericObject(object):
-	max_chars = 500
+	max_chars = 1000
 	def __init__(self, **kwargs):
 		for key, value in kwargs.items():
 			self.__setattr__(key, value)
@@ -380,7 +380,7 @@ class Yasp(GenericObject):
 		return rv_matches
 
 	def get_replacements_yasp_dot(self, _lines):
-		regex = r"{{yasp\.[a-zA-Z0-9_]+}}"
+		regex = r"{{yasp\.[a-zA-Z0-9_]+}}*"
 		matches = re.finditer(regex, ''.join(_lines), re.MULTILINE)
 		rv_matches = []
 		for m in matches:
@@ -392,6 +392,7 @@ class Yasp(GenericObject):
 		replaced = False
 		newl = l
 		for r in _replacements:
+			# print(f'-- checking for replacemend of {r}')
 			_tag = r[2:][:-2]
 			if r in newl:
 				try:
@@ -446,9 +447,9 @@ class Yasp(GenericObject):
 		except OSError as e:
 			out = f'[e] failed to execute: f{_args}'
 			if is_subscriptable(e):
-				err = 'Error #{0} : {1}'.format(e[0], e[1])
+				err = '- Error #{0} : {1}'.format(e[0], e[1])
 			else:
-				err = f'Error {e}'
+				err = f'- Error {e}'
 			rc = 255
 		if self.verbose:
 			print('    out:',out, file=sys.stderr)
@@ -472,21 +473,42 @@ class Yasp(GenericObject):
 					_rest = ' '.join(l.split(' ')[1:]).strip('\n')
 					_var, _cmnd = self.extract_shell_var(_rest)
 					if self.verbose:
-						print('extracted:', _cmnd, file=sys.stderr)
+						print(f'[i] extracted: "{_cmnd}"',file=sys.stderr)
 					out, err, rc = self.exec_cmnd(_cmnd, shell=True)
 					if err or rc != 0:
-						print(f'[e] extract {_var} failed', file=sys.stderr)
-						print(f'{err}', file=sys.stderr)
+						print(f'[e] extract {_var} using bash var "{_cmnd}" failed', file=sys.stderr)
+						print(f'    error is: {err}', file=sys.stderr)
 					else:
 						_val = out.decode('utf-8').strip('\n')
+						_ns, _replaced = self.replace_in_line([_val], [], self.replacements)
+						if _replaced:
+							_val = _ns
 						self.__setattr__(_var, _val)
 						_rv.append(f'# yasp var imported: {_var}={_val}')
-			if l.split(' ')[0] == '#yasp':
+				if l.split(' ')[1] == '--exec':
+					_rest = ' '.join(l.split(' ')[1:]).strip('\n')
+					_var, _cmnd = self.extract_shell_var(_rest)
+					if self.verbose:
+						print(f'[i] extracted: "{_cmnd}"',file=sys.stderr)
+					out, err, rc = self.exec_cmnd(_cmnd, shell=False)
+					if err or rc != 0:
+						print(f'[e] extract {_var} using bash var "{_cmnd}" failed', file=sys.stderr)
+						print(f'    error is: {err}', file=sys.stderr)
+					else:
+						_val = out.decode('utf-8').strip('\n')
+						_ns, _replaced = self.replace_in_line([_val], [], self.replacements)
+						if _replaced:
+							_val = _ns
+						self.__setattr__(_var, _val)
+						_rv.append(f'# yasp var imported: {_var}={_val}')
 				if l.split(' ')[1] == '--set':
 					_rest = ' '.join(l.split(' ')[1:]).strip('\n')
 					_var, _val = self.extract_shell_var(_rest)
+					_ns, _replaced = self.replace_in_line([_val], [], self.replacements)
+					if _replaced:
+						_val = _ns
 					if self.verbose:
-						print('extracted:', _cmnd, file=sys.stderr)
+						print('extracted:', _val, file=sys.stderr)
 					self.__setattr__(_var, _val)
 		return _rv
 
