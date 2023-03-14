@@ -2,3 +2,5 @@
 /software
 /__pycache__
 .yasp.yaml
+.activate
+/venvyasp
