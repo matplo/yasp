@@ -31,11 +31,20 @@ fi
 tmpfile=$(mktemp)	
 if [ -d ${venvdir} ]; then
 	echo "export PS1=\"\e[32;1m[\u\e[31;1m@\h\e[32;1m]\e[34;1m\w\e[0m\n> \"" > ${tmpfile}
+	if [ -e "$HOME/.bashrc" ]; then
+		echo "source $HOME/.bashrc" >> ${tmpfile}
+	fi
 	echo "source ${venvdir}/bin/activate" >> ${tmpfile}
+	if [ ! -e "${THISD}/.venvstartup.sh" ]; then
+		echo "module use ${THISD}/software/modules" > ${THISD}/.venvstartup.sh
+		echo "module avail" >> ${THISD}/.venvstartup.sh
+		echo "module list" >> ${THISD}/.venvstartup.sh
+	fi
+	echo "source ${THISD}/.venvstartup.sh" >> ${tmpfile}
 	if [ -z "${cmnd}" ]; then
 		/bin/bash --init-file ${tmpfile} -i
 	else
-		echo "[i] exec ${tmpfile}"
+		echo "[i] exec ${tmpfile}" >&2
 		echo "${cmnd}" >> ${tmpfile}
 		chmod +x ${tmpfile}
 		${tmpfile}

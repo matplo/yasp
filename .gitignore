@@ -4,3 +4,4 @@
 .yasp.yaml
 .activate
 /venvyasp
+.venvstartup.sh
