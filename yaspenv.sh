@@ -23,9 +23,11 @@ cd ${THISD}
 venvdir=${THISD}/venvyasp
 cmnd=$@
 
+first_run=""
 if [ ! -d ${venvdir} ]; then
 	echo "[i] creating venv"
 	python3 -m venv ${venvdir}
+	first_run="yes"
 fi
 
 tmpfile=$(mktemp)	
@@ -35,6 +37,10 @@ if [ -d ${venvdir} ]; then
 		echo "source $HOME/.bashrc" >> ${tmpfile}
 	fi
 	echo "source ${venvdir}/bin/activate" >> ${tmpfile}
+	if [ "${first_run}x" == "yesx" ]; then
+		echo "python -m pip install --upgrade pip" >> ${tmpfile}
+		echo "python -m pip install pyyaml" >> ${tmpfile}
+	fi
 	if [ ! -e "${THISD}/.venvstartup.sh" ]; then
 		echo "module use ${THISD}/software/modules" > ${THISD}/.venvstartup.sh
 		echo "module avail" >> ${THISD}/.venvstartup.sh
