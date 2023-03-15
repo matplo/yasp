@@ -37,7 +37,8 @@ if [ -d ${venvdir} ]; then
 		echo "source $HOME/.bashrc" >> ${tmpfile}
 	fi
 	echo "source ${venvdir}/bin/activate" >> ${tmpfile}
-	if [ "${first_run}x" == "yesx" ]; then
+	if [ "x${first_run}" == "xyes" ]; then
+		echo "[i] first run? ${first_run}"
 		echo "python -m pip install --upgrade pip" >> ${tmpfile}
 		echo "python -m pip install pyyaml" >> ${tmpfile}
 	fi
