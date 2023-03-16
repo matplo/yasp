@@ -48,6 +48,7 @@ if [ -d ${venvdir} ]; then
 		echo "module list" >> ${THISD}/.venvstartup.sh
 	fi
 	echo "source ${THISD}/.venvstartup.sh" >> ${tmpfile}
+	echo "cd ${savedir}" >> ${tmpfile}
 	if [ -z "${cmnd}" ]; then
 		/bin/bash --init-file ${tmpfile} -i
 	else
