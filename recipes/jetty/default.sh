@@ -7,7 +7,7 @@ softprefix=$({{yasp}} -q feature prefix)
 module use ${softprefix}/modules
 module avail
 
-for pack in fastjet/3.4.0 fjcontrib/1.050 HepMC3/3.2.5 LHAPDF6/6.5.3 root/6.26.10 pythia8/8308
+for pack in fastjet/3.4.0 fjcontrib/1.051 HepMC3/3.2.5 LHAPDF6/6.5.3 root/6.26.10 pythia8/8308
 do
 	module list
 	{{yasp}} -i ${pack} -m
