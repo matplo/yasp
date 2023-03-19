@@ -19,7 +19,8 @@ else
 fi
 other_opts="--enable-allcxxplugins --enable-allplugins"
 # not enabling the swig interface --enable-pyext
-system=$(gcc -dumpmachine)
-echo "{{srcdir}}/configure --prefix={{prefix}} --build=${system} --host=${system} ${cgal_opt} ${other_opts} "
-{{srcdir}}/configure --prefix={{prefix}} --build=${system} --host=${system} ${cgal_opt} ${other_opts} && make -j {{n_cores}} && make install
+#system=$(gcc -dumpmachine)
+#echo "{{srcdir}}/configure --prefix={{prefix}} --build=${system} --host=${system} ${cgal_opt} ${other_opts} "
+#{{srcdir}}/configure --prefix={{prefix}} --build=${system} --host=${system} ${cgal_opt} ${other_opts} && make -j {{n_cores}} && make install
+{{srcdir}}/configure --prefix={{prefix}} ${cgal_opt} ${other_opts} && make -j {{n_cores}} && make install
 exit $?

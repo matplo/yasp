@@ -19,6 +19,7 @@ fi
 #if [ -z "${fastjet_prefix}" ]; then
 #	   fastjet_prefix=$({{yasp}} -q feature prefix -i fastjet)
 #fi
+fastjet_prefix=$(fastjet-config --prefix)
 # this produces only static libs
 fjlibs=$(${fjconfig} --libs)
 ./configure --fastjet-config=${fjconfig} --prefix=${fastjet_prefix} && make -j {{n_cores}} all && make check && make install
