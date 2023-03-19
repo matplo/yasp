@@ -21,7 +21,7 @@ fi
 #fi
 fastjet_prefix=$(fastjet-config --prefix)
 # this produces only static libs
-fjlibs=$(${fjconfig} --libs)
+fjlibs=$(${fjconfig} --libs --plugins)
 ./configure --fastjet-config=${fjconfig} --prefix=${fastjet_prefix} && make -j {{n_cores}} all && make check && make install
 # add a cmake for dynamic libs!
 if [ $? -eq 0 ]
@@ -32,6 +32,7 @@ then
 	for c in ${contribs}
 	do
 		cd ${c}
+		echo "[i] in directory ${PWD}"
 		rm *example*.o
 		shlib=${fastjet_prefix}/lib/lib${c}.so
 		# {{CXX}} -fPIC -shared -o ${shlib} *.o -Wl,-rpath,${fastjet_prefix}/lib -L${fastjet_prefix}/lib -lfastjettools -lfastjet
