@@ -17,7 +17,7 @@ if [ -d "${CGAL_DIR}" ]; then
 else
 	cgal_opt="--disable-cgal"
 fi
-other_opts="--enable-allcxxplugins --enable-allplugins"
+other_opts="--enable-allcxxplugins --enable-thread-safety --enable-allplugins"
 # not enabling the swig interface --enable-pyext
 system=$(gcc -dumpmachine)
 echo "{{srcdir}}/configure --prefix={{prefix}} --build=${system} --host=${system} ${cgal_opt} ${other_opts} "

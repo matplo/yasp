@@ -18,6 +18,7 @@ do
 			module list
 		else
 			echo "[w] module ${softprefix}/modules/${pack} does not exist"
+			exit $?
 		fi
 	else
 		exit $?
