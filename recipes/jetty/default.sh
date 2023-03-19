@@ -17,10 +17,10 @@ do
 			module load ${pack}
 			module list
 		else
-			echo "[w] module ${softprefix}/modules/${pack} does not exist"
-			exit $?
+			echo "[w] module ${softprefix}/modules/${pack} does not exist - but that may be ok."
 		fi
 	else
-		exit $?
+		echo "[i] build of ${pack} exited with $?"
+		exit -1
 	fi
 done
