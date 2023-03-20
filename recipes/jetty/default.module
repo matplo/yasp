@@ -2,4 +2,4 @@
 setenv JETTY_DIR {{prefix}}
 
 prereq yasp/current 
-module load fastjet/3.4.0 HepMC3/3.2.5 LHAPDF6/6.5.3 root/6.26.10 pythia8/8308
+module load fastjet HepMC3 LHAPDF6 root pythia8
