@@ -225,7 +225,7 @@ class Yasp(GenericObject):
 			self.recipe_file = os.path.join(self.recipe_dir, self.recipe)
 			if os.path.isdir(self.recipe_file):
 				_candidates = find_files(self.recipe_file, '*.sh')
-				self.recipe_file = sorted(_candidates)[0]
+				self.recipe_file = sorted(_candidates, reverse=True)[0]
 				self.recipe = os.path.splitext(self.recipe_file.replace(self.recipe_dir, '').lstrip('/'))[0]
 			if not os.path.isfile(self.recipe_file):
 				_split = os.path.splitext(self.recipe)
