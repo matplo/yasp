@@ -52,16 +52,23 @@ optional arguments:
 
 # recommendation - initial setup
 
-## use pipenv
+## use virtualenv
+
+- a helper script provided
 
 ```
 ./yaspenv.sh
 ```
 
-or 
+- such you can do
 
 ```
-./yaspenv.sh --prefix <where you want your packages> --workdir /tmp/yasp [any other opts]
+./yaspenv.sh
+./yasp.py -i yasp -m # one time thing
+module load yasp
+yasp -l # list the known recipes
+yasp -i jetty -m # installs some software for HEP jetty research - fastjet, fjcontrib, HEPMC3, LHAPDF6, ROOT, Pythia8
+module load jetty
 ```
 
 - this will setup yasp --prefix dir (writing also a config file `.yasp.yaml`); note the default prefix is $HOME/yasp
