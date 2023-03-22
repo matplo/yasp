@@ -308,15 +308,20 @@ class Yasp(GenericObject):
 					# execute the shell build script
 					self.write_output_file(self.output_script, self.build_script_contents, executable=True)
 					_p = None
+					_error = False
 					try:
 						_p = subprocess.run([self.output_script], check=True)
 					except subprocess.CalledProcessError as exc:
 						print(f"{self.output_script} returned {exc.returncode}\n{exc}")
+						_error = True
 					if _p:
 						print(f'[i] {self.output_script} returned {_p.returncode}')
 
-					if self.module and self.module_output_fname:
-						self.write_output_file(self.module_output_fname, self.module_contents, executable=False)
+					if not _error:
+						if self.module and self.module_output_fname:
+							self.write_output_file(self.module_output_fname, self.module_contents, executable=False)
+					else:
+						break
 
 	def rm_dir_with_confirm(self, sdir):
 		if os.path.isdir(sdir):

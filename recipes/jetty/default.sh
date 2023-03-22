@@ -12,7 +12,8 @@ for pack in fastjet fjcontrib HepMC3 LHAPDF6 root pythia8
 do
 	module list
 	{{yasp}} -i ${pack} -m
-	if [ "0x$?" == "0x0" ]; then
+	_errcode=$?
+	if [ "0x${_errcode}" == "0x0" ]; then
 		if [ -e "${softprefix}/modules/${pack}" ]; then
 			echo "[i] loading module ${pack}"
 			module load ${pack}
@@ -22,6 +23,6 @@ do
 		fi
 	else
 		echo "[i] build of ${pack} exited with $?"
-		exit -1
+		exit 2
 	fi
 done
