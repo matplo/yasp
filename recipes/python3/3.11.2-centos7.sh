@@ -4,8 +4,8 @@ cd {{workdir}}
 version=3.11.2
 
 echo "[i] make sure you install some deps... - for CENTOS for example"
-echo "sudo yum install yum-utils"
-echo "sudo yum install libffi-devel sqlite-devel zlib zlib-devel "
+sudo yum install yum-utils -y
+sudo yum install libffi-devel sqlite-devel zlib zlib-devel -y
 
 export PYTHON_VERSION=${version}
 export PYTHON_MAJOR=3
@@ -21,8 +21,8 @@ if [ "x{{clean}}" == "True" ]; then
 fi
 [ ! -d "{{srcdir}}" ] && tar zxvf {{local_file}}
 echo "[i] fix for CentOS7"
-echo "sudo yum install -y epel"
-echo "sudo yum install -y openssl11-devel"
+sudo yum install -y epel
+sudo yum install -y openssl11-devel
 cd ${srcdir}
 sed -i 's/PKG_CONFIG openssl /PKG_CONFIG openssl11 /g' configure
 cd {{builddir}}
