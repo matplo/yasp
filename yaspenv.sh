@@ -41,10 +41,12 @@ if [ -d ${venvdir} ]; then
 		echo "[i] first run? ${first_run}"
 		echo "python -m pip install --upgrade pip" >> ${tmpfile}
 		echo "python -m pip install pyyaml" >> ${tmpfile}
+		echo "${THISD}/yasp.py -i yasp -m"
 	fi
 	if [ ! -e "${THISD}/.venvstartup.sh" ]; then
 		echo "module use ${THISD}/software/modules" > ${THISD}/.venvstartup.sh
 		echo "module avail" >> ${THISD}/.venvstartup.sh
+		echo "module load yasp" >> ${THISD}/.venvstartup.sh
 		echo "module list" >> ${THISD}/.venvstartup.sh
 	fi
 	echo "source ${THISD}/.venvstartup.sh" >> ${tmpfile}
