@@ -1,0 +1,7 @@
+#%Module
+setenv ACTS_DIR {{prefix}}
+setenv ACTSDIR {{prefix}}
+prepend-path PATH {{prefix}}/bin
+prepend-path DYLD_LIBRARY_PATH {{prefix}}/lib
+prepend-path LD_LIBRARY_PATH {{prefix}}/lib
+prepend-path PYTHONPATH {{prefix}}/lib
