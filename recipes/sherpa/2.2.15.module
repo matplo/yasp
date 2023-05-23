@@ -1,0 +1,11 @@
+#%Module
+setenv SHERPA_DIR {{prefix}}
+setenv SHERPA_ROOT {{prefix}}
+setenv SHERPA_SYS {{prefix}}
+setenv SHERPADIR {{prefix}}
+setenv SHERPAROOT {{prefix}}
+setenv SHERPASYS {{prefix}}
+prepend-path PATH {{prefix}}/bin
+prepend-path DYLD_LIBRARY_PATH {{prefix}}/lib
+prepend-path LD_LIBRARY_PATH {{prefix}}/lib
+prepend-path PYTHONPATH {{prefix}}/lib
