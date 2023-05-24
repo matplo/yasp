@@ -22,7 +22,28 @@ else
 	HEPMC2OPT=""
 fi
 
+if [ -d "${HEPMC3_DIR}" ]; then
+	HEPMC3OPT="--enable-hepmc3=${HEPMC3_DIR}"
+	# --enable-hepmc3root # for this one needs to compile HepMC3 with ROOT support
+else
+	HEPMC3OPT=""
+fi
 
-{{srcdir}}/configure --prefix={{prefix}} ${LHAPDF6OPT} ${HEPMC2OPT} && make -j {{n_cores}} && make install
+if [ -d "${ROOT_DIR}" ]; then
+	ROOTOPT="--enable-root=${ROOT_DIR}"
+else
+	ROOTOPT=""
+fi
+
+if [ -d "${FASTJET_DIR}" ]; then
+	FASTJETOPT="--enable-fastjet=${FASTJET_DIR}"
+else
+	FASTJETOPT=""
+fi
+
+{{srcdir}}/configure --prefix={{prefix}} \
+	${LHAPDF6OPT} ${HEPMC2OPT} ${HEPMC3OPT} ${ROOTOPT} ${FASTJETOPT} \
+	--enable-pyext --enable-analysis --enable-gzip --enable-pythia \
+	&& make -j {{n_cores}} && make install
 # --with-python-include="$(python -c "from sysconfig import get_paths; info = get_paths(); print(info['include'])")"
 exit $?
