@@ -43,7 +43,7 @@ fi
 
 {{srcdir}}/configure --prefix={{prefix}} \
 	${LHAPDF6OPT} ${HEPMC2OPT} ${HEPMC3OPT} ${ROOTOPT} ${FASTJETOPT} \
-	--enable-pyext --enable-analysis --enable-gzip --enable-pythia \
+	--enable-pyext --enable-analysis --enable-gzip --enable-pythia --enable-ufo --enable-mpi \
 	&& make -j {{n_cores}} && make install
 # --with-python-include="$(python -c "from sysconfig import get_paths; info = get_paths(); print(info['include'])")"
 exit $?

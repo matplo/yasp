@@ -15,7 +15,13 @@ else
 	ROOTOPT="-DHEPMC3_ENABLE_ROOTIO=OFF"
 fi
 
-cmake ${ROOTOPT} -DHEPMC3_BUILD_EXAMPLES=ON -DHEPMC3_ENABLE_TEST=ON -DCMAKE_INSTALL_PREFIX={{prefix}} {{srcdir}}
+cmake ${ROOTOPT} \
+	-DHEPMC3_BUILD_EXAMPLES=ON \
+	-DHEPMC3_ENABLE_TEST=ON \
+	-DCMAKE_INSTALL_PREFIX={{prefix}} \
+	-DHEPMC3_ENABLE_PYTHON:BOOL=ON \
+	-DHEPMC3_INSTALL_INTERFACES:BOOL=ON \
+	{{srcdir}}
 # cmake --build ./
 # {{srcdir}}/configure --prefix={{prefix}} ${other_opts} && make -j {{n_cores}} && make install
 
