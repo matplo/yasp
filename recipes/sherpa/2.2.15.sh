@@ -23,7 +23,7 @@ else
 fi
 
 if [ -d "${HEPMC3_DIR}" ]; then
-	HEPMC3OPT="--enable-hepmc3=${HEPMC3_DIR}"
+	HEPMC3OPT="--enable-hepmc3=${HEPMC3_DIR} --enable-hepmc3root"
 	# --enable-hepmc3root # for this one needs to compile HepMC3 with ROOT support
 else
 	HEPMC3OPT=""
@@ -44,6 +44,6 @@ fi
 {{srcdir}}/configure --prefix={{prefix}} \
 	${LHAPDF6OPT} ${HEPMC2OPT} ${HEPMC3OPT} ${ROOTOPT} ${FASTJETOPT} \
 	--enable-pyext --enable-analysis --enable-gzip --enable-pythia --enable-ufo --enable-mpi \
-	&& make -j {{n_cores}} && make install
+	&& make -j {{n_cores}} && make -j {{n_cores}} install
 # --with-python-include="$(python -c "from sysconfig import get_paths; info = get_paths(); print(info['include'])")"
 exit $?
