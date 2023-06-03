@@ -621,6 +621,7 @@ def add_arguments_to_parser(parser):
 	parser.add_argument('-m', '--module', help='write module file', action='store_true', default=False)
 	parser.add_argument('--module-only', help='write module file and exit', action='store_true', default=False)
 	parser.add_argument('--use-python', help='specify python executable - default is current {}'.format(sys.executable), default=sys.executable)
+	parser.add_argument('--make-module', '--mm', help='make a module from current set of loaded modules', type=str, default="")
 
 
 def str_to_args(s):
@@ -712,6 +713,40 @@ def main():
 				print(d, file=sys.stdout)
 		return
 
+	if args.make_module:
+		modfname = os.path.join(sb.base_prefix, 'modules', args.make_module)
+		print('[i] will write to:', modfname)
+		out, err, rc = sb.exec_cmnd('modulecmd python list -t')
+		if rc == 0:
+			_modules_list = [m for m in (out + err).decode('utf-8').split('Currently Loaded Modulefiles:')[1].split('\n') if len(m) > 0]
+		_yasp_mods = []
+		# print(sb.known_recipes)
+		# for m in _modules_list:
+		#	if m in sb.known_recipes:
+		#		_yasp_mods.append(m)
+		## print(_modules_list)
+		# print('yasp modules loaded:', _yasp_mods)
+		modules_to_load_full_path = []
+		modules_to_load = []
+		for m in _modules_list:
+			out, err, rc = sb.exec_cmnd(f'modulecmd python show {m} -t')
+			_dname = [s.split(m+':')[0] for s in (out + err).decode('utf-8').split('\n') if m+':' in s][0]
+			_fmodpath = [s.split(':')[0] for s in (out + err).decode('utf-8').split('\n') if m+':' in s][0]
+			if _fmodpath not in modules_to_load:
+				if os.path.isfile(_fmodpath):
+					modules_to_load_full_path.append(_fmodpath)
+					modules_to_load.append(m)
+			# print(m, 'from:', _dname, _fmodpath)
+		with open(modfname, 'w') as f:
+			print('#%Module', file=f)
+			for m in modules_to_load:
+				if 'yasp/current' == m:
+					continue
+				if args.make_module == m:
+					continue
+				print(f'module load {m}', file=f)
+				print(f'module load {m}', file=sys.stderr)
+  
 	# if args.install or args.debug:
 	if args.debug:
 		print(sb)
