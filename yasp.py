@@ -122,7 +122,7 @@ class Yasp(GenericObject):
 			f'{_prog_name}' : _this_file,
             'default_config' : _default_config,
 		    'current_dir' : _current_dir,
-            'recipe_dir' : _default_recipe_dir,
+            'recipe_dirs' : [_default_recipe_dir],
             'prefix' : _default_prefix,
             'workdir' : _default_workdir,
 			'download_command' : 'wget --no-check-certificate',
@@ -143,6 +143,12 @@ class Yasp(GenericObject):
 				self.configure_from_dict(self.args, ignore_none=True)
 			else:
 				self.configure_from_dict(self.args.__dict__)
+		if self.add_recipe_dir:
+			for recipe_dir in self.add_recipe_dir:
+				recipe_dir = str(recipe_dir)
+				if os.path.isdir(recipe_dir):
+					if recipe_dir not in self.recipe_dirs:
+						self.recipe_dirs.append(recipe_dir)
 		self.verbose = self.debug
 		self.get_known_recipes()
 		if self.handle_cmnd_args() == Yasp._break:
@@ -165,10 +171,11 @@ class Yasp(GenericObject):
 
 	def get_known_recipes(self):
 		self.known_recipes = []
-		files = find_files(self.recipe_dir, '*.sh')
-		for fn in files:
-			recipe = os.path.splitext(fn.replace(self.recipe_dir + '/', ''))[0]
-			self.known_recipes.append(recipe)
+		for recipe_dir in self.recipe_dirs:
+			files = find_files(recipe_dir, '*.sh')
+			for fn in files:
+				recipe = os.path.splitext(fn.replace(recipe_dir + '/', ''))[0]
+				self.known_recipes.append(recipe)
 
 	def handle_cmnd_args(self):
 		if self.list:
@@ -219,18 +226,22 @@ class Yasp(GenericObject):
 
 	def fix_recipe_scriptname(self):
 		if self.recipe:
-			self.recipe_dir = os.path.abspath(self.recipe_dir)
-			# self.recipe = self.recipe.replace('-', '/')
-			self.recipe = self.recipe.replace('==', '/')
-			self.recipe_file = os.path.join(self.recipe_dir, self.recipe)
-			if os.path.isdir(self.recipe_file):
-				_candidates = find_files(self.recipe_file, '*.sh')
-				self.recipe_file = sorted(_candidates, reverse=True)[0]
-				self.recipe = os.path.splitext(self.recipe_file.replace(self.recipe_dir, '').lstrip('/'))[0]
-			if not os.path.isfile(self.recipe_file):
-				_split = os.path.splitext(self.recipe)
-				if _split[1] != '.sh':
-					self.recipe_file = self.recipe_file + '.sh'
+			for recipe_dir in self.recipe_dirs:
+				recipe_dir = os.path.abspath(recipe_dir)
+				# self.recipe = self.recipe.replace('-', '/')
+				self.recipe = self.recipe.replace('==', '/')
+				self.recipe_file = os.path.join(recipe_dir, self.recipe)
+				if os.path.isdir(self.recipe_file):
+					_candidates = find_files(self.recipe_file, '*.sh')
+					self.recipe_file = sorted(_candidates, reverse=True)[0]
+					self.recipe = os.path.splitext(self.recipe_file.replace(recipe_dir, '').lstrip('/'))[0]
+				if not os.path.isfile(self.recipe_file):
+					_split = os.path.splitext(self.recipe)
+					if _split[1] != '.sh':
+						self.recipe_file = self.recipe_file + '.sh'
+				if os.path.exists(self.recipe_file):
+					self.recipe_dir = recipe_dir
+					break
 
 
 	def user_confirm(self, what, default_answer, acceptable_answers=['yes', 'no', 'y', 'n']):
@@ -609,6 +620,7 @@ def add_arguments_to_parser(parser):
 	parser.add_argument('--redownload', help='redownload even if file already there', action='store_true', default=False)
 	parser.add_argument('--dry-run', help='dry run - do not execute output script', action='store_true', default=False)
 	parser.add_argument('--recipe-dir', help='dir where recipes info sit - default: {}'.format(Yasp._default_recipe_dir), type=str)
+	parser.add_argument('--add-recipe-dir', help='add dir where recipes info sit', type=str, nargs='+') 
 	parser.add_argument('-o', '--output', help='output definition - for example for download', default='default.output', type=str)
 	parser.add_argument('--prefix', help='prefix of the installation {}'.format(Yasp._default_prefix))
 	parser.add_argument('--same-prefix', help='if this is true all install will go into the same prefix - default is {}/package-with-version'.format(Yasp._same_prefix), action='store_true', default=False)
