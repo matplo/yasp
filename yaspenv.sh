@@ -51,6 +51,9 @@ if [ -d ${venvdir} ]; then
 	if [ -e "$HOME/.bashrc" ]; then
 		echo "source $HOME/.bashrc" >> ${tmpfile}
 	fi
+	if [ -e "$HOME/.bash_profile" ]; then
+		echo "source $HOME/.bash_profile" >> ${tmpfile}
+	fi
 	echo "source ${venvdir}/bin/activate" >> ${tmpfile}
 	if [ "x${first_run}" == "xyes" ]; then
 		echo "[i] first run? ${first_run}"

@@ -102,8 +102,7 @@ class ConfigData(GenericObject):
 		if self.args:
 			self.configure_from_dict(self.args.__dict__)
 		self.verbose = self.debug
-
-
+    
 class Yasp(GenericObject):
 	_break = 'stop'
 	_continue = 'continue'
@@ -386,6 +385,14 @@ class Yasp(GenericObject):
 					ret_dict[_tag] = l[len(_tag):].strip('\n')
 		return ret_dict
 
+	def get_definitions_iter(self, _lines):
+		ret_dict = {}
+		for l in _lines:
+			_d = self.get_definitions([l])
+			print(l, _d)
+			ret_dict.update(_d)
+		return ret_dict
+
 	def get_replacements(self, _lines):
 		regex = r"{{[a-zA-Z0-9_]+}}*"
 		matches = re.finditer(regex, ''.join(_lines), re.MULTILINE)
@@ -430,6 +437,9 @@ class Yasp(GenericObject):
 		self.replacements.extend(self.get_replacements(_contents))
 		self.replacements.extend(self.get_replacements_yasp_dot(_contents))
 		_definitions = self.get_definitions(_contents)
+		if self.define:
+			_defs_args = self.get_definitions_iter(self.define)
+			_definitions.update(_defs_args)
 		if self.verbose:
 			print('[i] definitions:', _definitions)
 		if self.verbose:
@@ -616,6 +626,7 @@ def add_arguments_to_parser(parser):
 	parser.add_argument('--cleanup', help='clean the main workdir (downloaded and build items)', action='store_true', default=False)
 	parser.add_argument('-i', '-r', '--install', '--recipes', help='name of the recipe to process', type=str, nargs='+')
 	parser.add_argument('-d', '--download', help='download file', type=str)
+	parser.add_argument('--define', help='define replacement', type=str, nargs='+', default='')
 	parser.add_argument('--clean', help='start from scratch', action='store_true', default=False)
 	parser.add_argument('--redownload', help='redownload even if file already there', action='store_true', default=False)
 	parser.add_argument('--dry-run', help='dry run - do not execute output script', action='store_true', default=False)
