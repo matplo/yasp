@@ -23,7 +23,15 @@ class YaspReplace(yasp.GenericObject):
 			else:
 				self.configure_from_dict(self.args.__dict__)
 		_output = self.process_replacements(self.input, self.file)
-		_ = [print(s.strip('\n'), file=sys.stdout) for s in _output]
+		# _outlines = [s.strip('\n') for s in _output]
+		# print(_outlines)
+		# self.write_output_file(self.output, _outlines, False)
+		if self.show:
+			print('[i] possible replacements:')
+			for r in self.replacements:
+				print('   ', r)
+			return
+		self.write_output_file(self.output, _output, False)
   
 	def set_defaults(self):
 		for d in YaspReplace._defaults:
@@ -161,21 +169,27 @@ class YaspReplace(yasp.GenericObject):
 		return new_contents
 
 	def write_output_file(self, outfname, contents, executable=False):
-		with open(outfname, 'w') as f:
-			f.writelines(contents)
-		# if self.verbose:
-		print('[i] written:', outfname, file=sys.stderr)
-		if executable:
-			os.chmod(outfname, stat.S_IRWXU)
+		if outfname:
+			with open(outfname, 'w') as f:
+				f.writelines(contents)
+			if executable:
+				os.chmod(outfname, stat.S_IRWXU)
+		else:
+			sys.stdout.writelines(contents)
+		if self.verbose:
+			print('[i] written:', outfname, file=sys.stderr)
 
 
 def add_arguments_to_parser(parser):
 	parser.add_argument('-i', '--input', help='file to process or text', type=str, nargs='+', default='')
+	parser.add_argument('-o', '--output', help='file to write to', type=str, default='')
 	parser.add_argument('--define', help='define replacement', type=str, nargs='+', default='')
 	parser.add_argument('-f', '--file', help='file to process or text', type=str, default=None)
 	parser.add_argument('--use-config', help='use particular configuration file - default=$PWD/.yasp.yaml', default=None, type=str)
 	parser.add_argument('-g', '--debug', help='print some extra info', action='store_true', default=False)
 	parser.add_argument('--verbose', help='print some extra info', action='store_true', default=False)
+	parser.add_argument('--show', help='show what`s possible', action='store_true', default=False)
+	parser.add_argument('--dry-run', help='dry run - do not execute output script', action='store_true', default=False)
   
 
 def main():
