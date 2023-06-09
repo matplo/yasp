@@ -90,6 +90,13 @@ class YaspReplace(yasp.GenericObject):
 					ret_dict[_tag] = l[len(_tag):].strip('\n')
 		return ret_dict
 
+	def get_definitions_iter(self, _lines):
+		ret_dict = {}
+		for l in _lines:
+			_d = self.get_definitions([l])
+			ret_dict.update(_d)
+		return ret_dict
+
 	def get_replacements(self, _lines):
 		regex = r"{{[a-zA-Z0-9_]+}}*"
 		matches = re.finditer(regex, ''.join(_lines), re.MULTILINE)
@@ -132,11 +139,10 @@ class YaspReplace(yasp.GenericObject):
 			print(f'[i] replacements: {self.replacements}')
 		_definitions = self.get_definitions(_contents)
 		if self.define:
-			_defs_args = self.get_definitions(self.define)
+			_defs_args = self.get_definitions_iter(self.define)
 			_definitions.update(_defs_args)
 		if self.verbose:
 			print('[i] definitions:', _definitions)
-			print('[i] definitions:', _defs_args)
 		if self.verbose:
 			print('[i] number of replacements found', len(self.replacements))
 			print('   ', self.replacements)
@@ -165,7 +171,7 @@ class YaspReplace(yasp.GenericObject):
 
 def add_arguments_to_parser(parser):
 	parser.add_argument('-i', '--input', help='file to process or text', type=str, nargs='+', default='')
-	parser.add_argument('--def', '--define', help='define replacement', type=str, nargs='+', default='')
+	parser.add_argument('--define', help='define replacement', type=str, nargs='+', default='')
 	parser.add_argument('-f', '--file', help='file to process or text', type=str, default=None)
 	parser.add_argument('--use-config', help='use particular configuration file - default=$PWD/.yasp.yaml', default=None, type=str)
 	parser.add_argument('-g', '--debug', help='print some extra info', action='store_true', default=False)
@@ -177,7 +183,6 @@ def main():
 	add_arguments_to_parser(parser)
 	args = parser.parse_args()
 
-	print(args)
 	args.input = ';'.join([';'.join(s.split('\n')) for s in args.input])
 	yr = YaspReplace(args=args)
 

@@ -389,7 +389,6 @@ class Yasp(GenericObject):
 		ret_dict = {}
 		for l in _lines:
 			_d = self.get_definitions([l])
-			print(l, _d)
 			ret_dict.update(_d)
 		return ret_dict
 
