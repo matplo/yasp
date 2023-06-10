@@ -16,11 +16,8 @@ python_dest_path={{prefix}}/lib/{{python_site_packages_subpath}}
 mkdir -pv {{python_dest_path}}/yasp
 ln -sv {{yasp.yasp_src_dir}}/yasp.py {{python_dest_path}}/yasp/__init__.py
 
-# deal with yasprepl.py
-mkdir -pv {{python_dest_path}}/yasp/yasprepl
-ln -sv {{yasp.yasp_src_dir}}/yasprepl.py {{python_dest_path}}/yasp/yasprepl/__init__.py
-
-# deal with yasprepl.py
-mkdir -pv {{python_dest_path}}/yasp/util
-touch {{python_dest_path}}/yasp/util/__init__.py
-ln -sv {{yasp.yasp_src_dir}}/util/cppyyhelper.py {{python_dest_path}}/yasp/util/
+for pack in yasprepl cppyyhelper
+do
+	mkdir -pv {{python_dest_path}}/yasp/${pack}
+	ln -sv {{yasp.yasp_src_dir}}/${pack}.py {{python_dest_path}}/yasp/${pack}/__init__.py
+done
