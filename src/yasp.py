@@ -108,14 +108,15 @@ class Yasp(GenericObject):
 	_continue = 'continue'
 	_same_prefix = False
 	_this_file = os.path.abspath(__file__)
-	_yasp_dir = get_this_directory()
+	_yasp_dir = os.path.abspath(os.path.join(get_this_directory(), '..'))
+	_yasp_src_dir = get_this_directory()
 	_prog_name = os.path.splitext(os.path.basename(__file__))[0]
-	_default_config = os.path.join(get_this_directory(), '.yasp.yaml')
-	_default_recipe_dir = os.path.join(get_this_directory(), 'recipes')
+	_default_config = os.path.join(_yasp_dir, '.yasp.yaml')
+	_default_recipe_dir = os.path.join(_yasp_dir, 'recipes')
 	# _default_prefix = os.path.join(os.getenv('HOME'), _prog_name)
-	_default_prefix = os.path.join(get_this_directory(), 'software')
+	_default_prefix = os.path.join(_yasp_dir, 'software')
 	# _default_workdir = os.path.join(os.getenv('HOME'), _prog_name, '.workdir')
-	_default_workdir = os.path.join(get_this_directory(), '.workdir')
+	_default_workdir = os.path.join(_yasp_dir, '.workdir')
 	_current_dir = os.path.realpath(os.getcwd())
 	_defaults = {
 			f'{_prog_name}' : _this_file,
@@ -127,6 +128,7 @@ class Yasp(GenericObject):
 			'download_command' : 'wget --no-check-certificate',
 			'python' : os.path.abspath(os.path.realpath(sys.executable)),
 			'yasp_dir' : _yasp_dir,
+			'yasp_src_dir' : _yasp_src_dir,
 			'python_version' : f'{sys.version_info.major}.{sys.version_info.minor}',
 			'python_site_packages_subpath' : f'python{sys.version_info.major}.{sys.version_info.minor}/site-packages'
 	}
