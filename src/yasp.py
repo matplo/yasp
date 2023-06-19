@@ -9,6 +9,11 @@ import re
 import shutil
 import fnmatch
 import yaml
+import tempfile
+import tqdm
+import threading
+import multiprocessing
+
 
 def get_this_directory():
 	_this_file = os.path.dirname(os.path.realpath(os.path.abspath(__file__)))
@@ -102,7 +107,81 @@ class ConfigData(GenericObject):
 		if self.args:
 			self.configure_from_dict(self.args.__dict__)
 		self.verbose = self.debug
-    
+
+
+def exec_cmnd_thread(cmnd, verbose, shell):
+	# _args = shlex.split(cmnd)
+	if verbose:
+		print('[i] calling', cmnd, file=sys.stderr)
+	try:
+		# p = subprocess.Popen(_args, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		# out, err = p.communicate()
+		# rc = p.returncode
+		p = subprocess.run(cmnd, shell=shell, check=True, capture_output=True)
+		p.check_returncode()
+		if p:
+			if verbose:
+				print('[i] result of: ' + str(p.args) + '\n    out:\n' + str(p.stdout.decode('utf-8')) + '\n    err:\n' + str(p.stderr.decode('utf-8')) + '\n     rc: ' + str(p.returncode),  file=sys.stderr)
+			return p
+	except OSError as e:
+		out = f'[e] failed to execute: f{_args}'
+		if is_subscriptable(e):
+			err = '- Error #{0} : {1}'.format(e[0], e[1])
+		else:
+			err = f'- Error {e}'
+			rc = 255
+	except subprocess.CalledProcessError as e:
+		print('\n[error] result of: ' + str(e.cmd) + '\n    out:\n' + e.stdout.decode('utf-8') + '\n    err:\n' + e.stderr.decode('utf-8') + '\n     rc: ' + str(e.returncode),  file=sys.stderr)
+
+	return None
+
+class ThreadExec(GenericObject):
+	def __init__(self, **kwargs):
+		super(ThreadExec, self).__init__(**kwargs)
+		if self.args:
+			self.configure_from_dict(self.args.__dict__)
+		if self.verbose:
+			print(self)
+		if self.fname:
+			with open(self.fname) as f:
+				lines = f.readlines()
+				self.exec_list(lines)
+		else:
+			print('[i] exec file unspecified')
+
+	def count_threads_alive(self, threads):
+		_count = len([thr for thr in threads if thr.is_alive()])
+		return _count
+
+	def exec_list(self, lcommands = []):
+		threads = list()
+		pbar_l = tqdm.tqdm(lcommands, desc='threads launched')
+		pbar_c = tqdm.tqdm(lcommands, desc='threads completed')
+		for lc in lcommands:
+			x = threading.Thread(target=exec_cmnd_thread, args=(lc, self.verbose, True))
+			threads.append(x)
+			x.start()
+			pbar_l.update(1)
+			while self.count_threads_alive(threads) >= multiprocessing.cpu_count() * 2:
+				_ = [thr.join(0.1) for thr in threads if thr.is_alive()]
+				pbar_c.n = len(lcommands) - self.count_threads_alive(threads)
+				pbar_c.update(0)
+				if self.count_threads_alive(threads) > 0:
+					pbar_l.n = self.count_threads_alive(threads)
+					pbar_l.update(0)
+					_ = [thr.join(0.1) for thr in threads if thr.is_alive()]
+					pbar_c.n = len(lcommands) - self.count_threads_alive(threads)
+					pbar_c.update(0)
+		while self.count_threads_alive(threads) > 0:
+			pbar_l.n = len(lcommands)
+			pbar_l.update(0)
+			_ = [thr.join(0.1) for thr in threads if thr.is_alive()]
+			pbar_c.n = len(lcommands) - self.count_threads_alive(threads)
+			pbar_c.update(0)
+		pbar_l.close()
+		pbar_c.close()
+
+
 class Yasp(GenericObject):
 	_break = 'stop'
 	_continue = 'continue'
@@ -152,16 +231,41 @@ class Yasp(GenericObject):
 						self.recipe_dirs.append(recipe_dir)
 		self.verbose = self.debug
 		self.get_known_recipes()
+		self.base_prefix 	= self.prefix
+		self.base_workdir 	= self.workdir
 		if self.handle_cmnd_args() == Yasp._break:
 			self.no_install = True
 			return
 		if self.download:
 			self.exec_download()
 			self.no_install = True
-			return
-		self.base_prefix 	= self.prefix
-		self.base_workdir 	= self.workdir
+		if self.execute:
+			self.exec_execute()
+			self.no_install = True
 		self.run()
+
+	def exec_execute(self):
+		if not os.path.exists(self.execute):
+			print(f'[e] file with commands to execute does not exist {self.execute}', file=sys.stderr)
+			return Yasp._break
+		self.get_from_environment()
+		self.output_script_file, self.output_script = tempfile.mkstemp(suffix = '.yasp.tmp')
+		print(f'[i] output will be {self.output_script} ...', file=sys.stderr)
+		self.workdir = os.path.dirname(self.output_script)
+		self.build_script_contents = self.process_replacements(self.execute)
+		self.build_script_contents = self.process_yasp_tags(self.build_script_contents)
+		self.build_script_contents = self.process_replacements(self.execute) # yes has to do it twice
+		os.close(self.output_script_file)
+		self.write_output_file(self.output_script, self.build_script_contents, executable=True)
+		print(f'[i] executing {self.output_script} ... - parallel: {self.parallel}', file=sys.stderr)
+		if self.parallel:
+			_ = ThreadExec(fname=self.output_script, verbose=self.verbose)
+		else:
+			out, err, rc = self.exec_cmnd(self.output_script, shell=True)
+			if rc != 0:
+				print(f'    execution {self.output_script} returned: {rc}', file=sys.stderr)
+			else:
+				print(f'    execution returned:', rc, file=sys.stderr)
 
 	def set_defaults(self):
 		for d in Yasp._defaults:
@@ -187,7 +291,7 @@ class Yasp(GenericObject):
 
 		if self.configure:
 			_out_dict = {}
-			_ignore_keys = ['debug', 'list', 'cleanup', 'install', 'download', "redownload", 'yes', 'module', 'module_only',
+			_ignore_keys = ['debug', 'list', 'cleanup', 'install', 'download', "redownload", 'yes', 'module', 'module_only', 'execute',
 					'dry_run', 'configure', 'use_config', 'clean', 'output', 'args', 'known_recipes', 'used_config', 'verbose', 'query']
 			for k in self.__dict__:
 				if k in _ignore_keys:
@@ -632,7 +736,7 @@ def add_arguments_to_parser(parser):
 	parser.add_argument('--redownload', help='redownload even if file already there', action='store_true', default=False)
 	parser.add_argument('--dry-run', help='dry run - do not execute output script', action='store_true', default=False)
 	parser.add_argument('--recipe-dir', help='dir where recipes info sit - default: {}'.format(Yasp._default_recipe_dir), type=str)
-	parser.add_argument('--add-recipe-dir', help='add dir where recipes info sit', type=str, nargs='+') 
+	parser.add_argument('--add-recipe-dir', help='add dir where recipes info sit', type=str, nargs='+')
 	parser.add_argument('-o', '--output', help='output definition - for example for download', default='default.output', type=str)
 	parser.add_argument('--prefix', help='prefix of the installation {}'.format(Yasp._default_prefix))
 	parser.add_argument('--same-prefix', help='if this is true all install will go into the same prefix - default is {}/package-with-version'.format(Yasp._same_prefix), action='store_true', default=False)
@@ -646,6 +750,8 @@ def add_arguments_to_parser(parser):
 	parser.add_argument('--module-only', help='write module file and exit', action='store_true', default=False)
 	parser.add_argument('--use-python', help='specify python executable - default is current {}'.format(sys.executable), default=sys.executable)
 	parser.add_argument('--make-module', '--mm', help='make a module from current set of loaded modules', type=str, default="")
+	parser.add_argument('-e', '--execute', help='execute commands from a file', type=str, default='')
+	parser.add_argument('-p', '--parallel', help='execute commands from a file concurently', action='store_true', default=False)
 
 
 def str_to_args(s):
@@ -770,7 +876,7 @@ def main():
 					continue
 				print(f'module load {m}', file=f)
 				print(f'module load {m}', file=sys.stderr)
-  
+
 	# if args.install or args.debug:
 	if args.debug:
 		print(sb)

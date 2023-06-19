@@ -45,7 +45,7 @@ if [ ! -d ${venvdir} ]; then
 	first_run="yes"
 fi
 
-tmpfile=$(mktemp)	
+tmpfile=$(mktemp)
 if [ -d ${venvdir} ]; then
 	echo "export PS1=\"\e[32;1m[\u\e[31;1m@\h\e[32;1m]\e[34;1m\w\e[0m\n> \"" > ${tmpfile}
 	if [ -e "$HOME/.bashrc" ]; then
@@ -58,7 +58,7 @@ if [ -d ${venvdir} ]; then
 	if [ "x${first_run}" == "xyes" ]; then
 		echo "[i] first run? ${first_run}"
 		echo "python -m pip install --upgrade pip" >> ${tmpfile}
-		echo "python -m pip install pyyaml" >> ${tmpfile}
+		echo "python -m pip install pyyaml tqdm" >> ${tmpfile}
 		echo "${THISD}/src/yasp.py -i yasp -m" >> ${tmpfile}
 	fi
 	if [ ! -e "${THISD}/.venvstartup.sh" ]; then
@@ -91,7 +91,7 @@ fi
 #else
 #	current_python_version=$(python3 -c "import sys; print('.'.join([str(s) for s in sys.version_info[:3]]));")
 #	pipenv --python ${current_python_version}
-#	pipenv install pyyaml 
+#	pipenv install pyyaml
 #	pipenv run ./yasp.py --configure $@
 #	pipenv run ./yasp.py --install yasp -m
 #	pipenv shell
