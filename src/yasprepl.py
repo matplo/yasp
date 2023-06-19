@@ -32,7 +32,7 @@ class YaspReplace(yasp.GenericObject):
 				print('   ', r)
 			return
 		self.write_output_file(self.output, _output, False)
-  
+
 	def set_defaults(self):
 		for d in YaspReplace._defaults:
 			if self.__getattr__(d) is None:
@@ -176,12 +176,13 @@ class YaspReplace(yasp.GenericObject):
 				os.chmod(outfname, stat.S_IRWXU)
 		else:
 			sys.stdout.writelines(contents)
+			sys.stdout.write('\n')
 		if self.verbose:
 			print('[i] written:', outfname, file=sys.stderr)
 
 
 def add_arguments_to_parser(parser):
-	parser.add_argument('-i', '--input', help='file to process or text', type=str, nargs='+', default='')
+	parser.add_argument('-i', '--input', help='text to process', type=str, nargs='+', default='')
 	parser.add_argument('-o', '--output', help='file to write to', type=str, default='')
 	parser.add_argument('--define', help='define replacement', type=str, nargs='+', default='')
 	parser.add_argument('-f', '--file', help='file to process or text', type=str, default=None)
@@ -190,7 +191,7 @@ def add_arguments_to_parser(parser):
 	parser.add_argument('--verbose', help='print some extra info', action='store_true', default=False)
 	parser.add_argument('--show', help='show what`s possible', action='store_true', default=False)
 	parser.add_argument('--dry-run', help='dry run - do not execute output script', action='store_true', default=False)
-  
+
 
 def main():
 	parser = argparse.ArgumentParser()
