@@ -173,6 +173,9 @@ class ThreadExec(GenericObject):
 			self.configure_from_dict(self.args.__dict__)
 		if self.verbose:
 			print(self)
+		if self.n_jobs is None:
+			self.n_jobs = multiprocessing.cpu_count() * 2
+		print('[i] setting max number of jobs to', self.n_jobs)
 		if self.fname:
 			with open(self.fname) as f:
 				lines = f.readlines()
@@ -186,20 +189,22 @@ class ThreadExec(GenericObject):
 
 	def exec_list(self, lcommands = []):
 		threads = list()
-		pbar_l = tqdm.tqdm(lcommands, desc='threads launched')
-		pbar_c = tqdm.tqdm(lcommands, desc='threads completed')
 		logname_base = tempfile.mkstemp(suffix = '.yasp.tmp_log')
 		os.close(logname_base[0])
 		lognames = [logname_base[1] + '{}'.format(ilc) for ilc in range(len(lcommands))]
 		# _ = [os.close(f[0]) for f in logs]
+		print('[i] log for line N goes to {}N'.format(logname_base[1]))
+		pbar_l = tqdm.tqdm(lcommands, desc='threads launched')
+		pbar_c = tqdm.tqdm(lcommands, desc='threads completed')
 		for ilc, lc in enumerate(lcommands):
 			# x = threading.Thread(target=exec_cmnd_thread, args=(lc, self.verbose, True))
-			print(f'[i] log for line {ilc} goes to {lognames[ilc]}')
+			# print(f'\n[i] log for line {ilc} goes to {lognames[ilc]}')
 			x = threading.Thread(target=exec_cmnd_thread_pout, args=(lc, self.verbose, True, lognames[ilc]))
 			threads.append(x)
 			x.start()
 			pbar_l.update(1)
-			while self.count_threads_alive(threads) >= multiprocessing.cpu_count() * 2:
+			while self.count_threads_alive(threads) >= self.n_jobs:
+			# while self.count_threads_alive(threads) >= multiprocessing.cpu_count() * 2:
 				_ = [thr.join(0.1) for thr in threads if thr.is_alive()]
 				pbar_c.n = len(lcommands) - self.count_threads_alive(threads)
 				pbar_c.update(0)
@@ -297,7 +302,7 @@ class Yasp(GenericObject):
 		self.write_output_file(self.output_script, self.build_script_contents, executable=True)
 		print(f'[i] executing {self.output_script} ... - parallel: {self.parallel}', file=sys.stderr)
 		if self.parallel:
-			_ = ThreadExec(fname=self.output_script, verbose=self.verbose)
+			_ = ThreadExec(fname=self.output_script, verbose=self.verbose, n_jobs=self.n_jobs)
 		else:
 			out, err, rc = self.exec_cmnd(self.output_script, shell=True)
 			if rc != 0:
@@ -365,10 +370,17 @@ class Yasp(GenericObject):
 			if rc == 0:
 				# print('[i] g++ is', out.decode('utf-8'))
 				self.__setattr__(w, out.decode('utf-8').strip('\n'))
-		if self.n_cores is None:
-			self.n_cores = os.cpu_count()
 		if self.n_cpu is None:
 			self.n_cpu = os.cpu_count()
+		if self.n_cores is None:
+			self.n_cores = self.n_cpu
+		else:
+			self.n_cpu = self.n_cores
+		if self.n_jobs is None:
+			self.n_jobs = self.n_cpu
+		else:
+			self.n_cpu = self.n_jobs
+			self.n_cores = self.n_jobs
 
 	def fix_recipe_scriptname(self):
 		if self.recipe:
@@ -578,9 +590,10 @@ class Yasp(GenericObject):
 
 	def process_yasp_define(self):
 		_defs_args = self.get_definitions_iter(self.yasp_define)
-		for k in _defs_args:
-			_val = _defs_args[k]
-			print(k.strip('='), '=', _val)
+		for _k in _defs_args:
+			_val = _defs_args[_k]
+			k = _k.split('=')[0]
+			# print(k.strip('='), '=', _val)
 			if ':' in _val:
 				_type = _val.split(':')[0]
 				_val = _val.split(':')[1]
@@ -591,6 +604,7 @@ class Yasp(GenericObject):
 				if _type == 'str':
 					_val = str(_val)
 			self.__setattr__(k, _val)
+			print(f'{k} = [{self.__getattr__(k)}]')
 
 	def process_replacements(self, input_file):
 		_contents = self.get_file_contents(input_file)
