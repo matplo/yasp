@@ -135,6 +135,37 @@ def exec_cmnd_thread(cmnd, verbose, shell):
 
 	return None
 
+
+def exec_cmnd_thread_pout(cmnd, verbose, shell, poutname):
+	# _args = shlex.split(cmnd)
+	pout = open(poutname, 'w')
+	if verbose:
+		print('[i] calling', cmnd, file=sys.stderr)
+	try:
+		# p = subprocess.Popen(_args, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		# out, err = p.communicate()
+		# rc = p.returncode
+		p = subprocess.run(cmnd, shell=shell, check=True, capture_output=False, stdout=pout, stderr=pout)
+		p.check_returncode()
+		if p:
+			if verbose:
+				# print('[i] result of: ' + str(p.args) + '\n    out:\n' + str(p.stdout.decode('utf-8')) + '\n    err:\n' + str(p.stderr.decode('utf-8')) + '\n     rc: ' + str(p.returncode),  file=sys.stderr)
+				print('[i] result of: ' + str(p.args) + '\n     rc: ' + str(p.returncode),  file=sys.stderr)
+			return p
+	except OSError as e:
+		out = f'[e] failed to execute: f{_args}'
+		if is_subscriptable(e):
+			err = '- Error #{0} : {1}'.format(e[0], e[1])
+		else:
+			err = f'- Error {e}'
+			rc = 255
+	except subprocess.CalledProcessError as e:
+		# print('\n[error] result of: ' + str(e.cmd) + '\n    out:\n' + e.stdout.decode('utf-8') + '\n    err:\n' + e.stderr.decode('utf-8') + '\n     rc: ' + str(e.returncode),  file=sys.stderr)
+		print('\n[error] executing: ' + str(e.cmd) + '\n see: ' + poutname + '\n')
+	pout.close()
+	return None
+
+
 class ThreadExec(GenericObject):
 	def __init__(self, **kwargs):
 		super(ThreadExec, self).__init__(**kwargs)
@@ -157,8 +188,14 @@ class ThreadExec(GenericObject):
 		threads = list()
 		pbar_l = tqdm.tqdm(lcommands, desc='threads launched')
 		pbar_c = tqdm.tqdm(lcommands, desc='threads completed')
-		for lc in lcommands:
-			x = threading.Thread(target=exec_cmnd_thread, args=(lc, self.verbose, True))
+		logname_base = tempfile.mkstemp(suffix = '.yasp.tmp_log')
+		os.close(logname_base[0])
+		lognames = [logname_base[1] + '{}'.format(ilc) for ilc in range(len(lcommands))]
+		# _ = [os.close(f[0]) for f in logs]
+		for ilc, lc in enumerate(lcommands):
+			# x = threading.Thread(target=exec_cmnd_thread, args=(lc, self.verbose, True))
+			print(f'[i] log for line {ilc} goes to {lognames[ilc]}')
+			x = threading.Thread(target=exec_cmnd_thread_pout, args=(lc, self.verbose, True, lognames[ilc]))
 			threads.append(x)
 			x.start()
 			pbar_l.update(1)
@@ -236,6 +273,7 @@ class Yasp(GenericObject):
 		if self.handle_cmnd_args() == Yasp._break:
 			self.no_install = True
 			return
+		self.process_yasp_define()
 		if self.download:
 			self.exec_download()
 			self.no_install = True
@@ -327,7 +365,10 @@ class Yasp(GenericObject):
 			if rc == 0:
 				# print('[i] g++ is', out.decode('utf-8'))
 				self.__setattr__(w, out.decode('utf-8').strip('\n'))
-		self.n_cores = os.cpu_count()
+		if self.n_cores is None:
+			self.n_cores = os.cpu_count()
+		if self.n_cpu is None:
+			self.n_cpu = os.cpu_count()
 
 	def fix_recipe_scriptname(self):
 		if self.recipe:
@@ -535,6 +576,22 @@ class Yasp(GenericObject):
 				replaced = True
 		return newl, replaced
 
+	def process_yasp_define(self):
+		_defs_args = self.get_definitions_iter(self.yasp_define)
+		for k in _defs_args:
+			_val = _defs_args[k]
+			print(k.strip('='), '=', _val)
+			if ':' in _val:
+				_type = _val.split(':')[0]
+				_val = _val.split(':')[1]
+				if _type == 'int':
+					_val = int(_val)
+				if _type == 'float':
+					_val = float(_val)
+				if _type == 'str':
+					_val = str(_val)
+			self.__setattr__(k, _val)
+
 	def process_replacements(self, input_file):
 		_contents = self.get_file_contents(input_file)
 		if self.replacements is None:
@@ -732,6 +789,7 @@ def add_arguments_to_parser(parser):
 	parser.add_argument('-i', '-r', '--install', '--recipes', help='name of the recipe to process', type=str, nargs='+')
 	parser.add_argument('-d', '--download', help='download file', type=str)
 	parser.add_argument('--define', help='define replacement', type=str, nargs='+', default='')
+	parser.add_argument('--yasp-define', help='define yasp properties', type=str, nargs='+', default='')
 	parser.add_argument('--clean', help='start from scratch', action='store_true', default=False)
 	parser.add_argument('--redownload', help='redownload even if file already there', action='store_true', default=False)
 	parser.add_argument('--dry-run', help='dry run - do not execute output script', action='store_true', default=False)
