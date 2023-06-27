@@ -1,0 +1,11 @@
+#%Module
+setenv PCRE2_DIR {{prefix}}
+setenv PCRE2_ROOT {{prefix}}
+setenv PCRE2_SYS {{prefix}}
+setenv PCRE2DIR {{prefix}}
+setenv PCRE2ROOT {{prefix}}
+setenv PCRE2SYS {{prefix}}
+prepend-path PATH {{prefix}}/bin
+prepend-path DYLD_LIBRARY_PATH {{prefix}}/lib
+prepend-path LD_LIBRARY_PATH {{prefix}}/lib
+prepend-path PYTHONPATH {{prefix}}/lib
