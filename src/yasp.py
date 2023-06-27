@@ -916,11 +916,33 @@ def main():
 		return
 
 	if args.make_module:
+		# determine what's the module command to use
+		out, err, rc = sb.exec_cmnd('modulecmd python -t list')
+		if rc == 0:
+			mcmnd = 'modulecmd python -t'
+		else:
+			mcmnd = os.path.expandvars("$LMOD_CMD") + ' -t'
+			_lmod_cmnd='{} list'.format(mcmnd)
+			out, err, rc = sb.exec_cmnd(_lmod_cmnd)
+			if rc == 0:
+				print('[i] will use', mcmnd, 'as module command')
+			else:
+				print(f'[error] unable to use neither module command nor {mcmnd}', err)
+				return 2
 		modfname = os.path.join(sb.base_prefix, 'modules', args.make_module)
 		print('[i] will write to:', modfname)
-		out, err, rc = sb.exec_cmnd('modulecmd python list -t')
+		out, err, rc = sb.exec_cmnd(f'{mcmnd} list')
 		if rc == 0:
-			_modules_list = [m for m in (out + err).decode('utf-8').split('Currently Loaded Modulefiles:')[1].split('\n') if len(m) > 0]
+			_sout = (out + err).decode('utf-8')
+			if 'Currently Loaded Modulefiles:' in _sout:
+				_sout = _sout.replace('Currently Loaded Modulefiles:', '')
+			if 'No Modulefiles Currently Loaded.' in _sout:
+				_sout = ''
+			_modules_list0 = [m for m in _sout.split('\n') if len(m) > 0]
+			_modules_list = [m for m in _modules_list0 if '_Module' not in m and 'export ' not in m and '=' not in m]
+		else:
+			print(f'[error] unable to use neither module command nor {mcmnd}', err)
+			return 2
 		_yasp_mods = []
 		# print(sb.known_recipes)
 		# for m in _modules_list:
@@ -930,15 +952,20 @@ def main():
 		# print('yasp modules loaded:', _yasp_mods)
 		modules_to_load_full_path = []
 		modules_to_load = []
-		for m in _modules_list:
-			out, err, rc = sb.exec_cmnd(f'modulecmd python show {m} -t')
-			_dname = [s.split(m+':')[0] for s in (out + err).decode('utf-8').split('\n') if m+':' in s][0]
-			_fmodpath = [s.split(':')[0] for s in (out + err).decode('utf-8').split('\n') if m+':' in s][0]
-			if _fmodpath not in modules_to_load:
-				if os.path.isfile(_fmodpath):
-					modules_to_load_full_path.append(_fmodpath)
-					modules_to_load.append(m)
-			# print(m, 'from:', _dname, _fmodpath)
+		if 'modulecmd' in mcmnd:
+			for m in _modules_list:
+				out, err, rc = sb.exec_cmnd(f'{mcmnd} -t show {m}')
+				_sout = (out + err).decode('utf-8')
+				print(_sout)
+				_dname = [s.split(m+':')[0] for s in _sout.split('\n') if m+':' in s][0]
+				_fmodpath = [s.split(':')[0] for s in _sout.split('\n') if m+':' in s][0]
+				if _fmodpath not in modules_to_load:
+					if os.path.isfile(_fmodpath):
+						modules_to_load_full_path.append(_fmodpath)
+						modules_to_load.append(m)
+				# print(m, 'from:', _dname, _fmodpath)
+		else:
+			modules_to_load = [m for m in _modules_list]
 		with open(modfname, 'w') as f:
 			print('#%Module', file=f)
 			for m in modules_to_load:
