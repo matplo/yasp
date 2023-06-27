@@ -27,13 +27,16 @@ first_run=""
 if [ ! -d ${venvdir} ]; then
 	echo "[i] creating venv"
 
-	venv_cmnd=$(which venv)
-	if [ -z ${venv_cmnd} ]; then
-		echo "[w] no venv - trying virtualenv"
-		venv_cmnd=$(which virtualenv)
-		if [ ! -z ${venv_cmnd} ]; then
-			venv_cmnd="virtualenv"
+	venv_cmnd=""
+	python3 -m virtualenv -h 2>&1 >> /dev/null
+	if [ "x$?" != "x0" ]; then
+		echo "[w] no virtualenv - trying venv"
+		python3 -m venv -h 2>&1 >> /dev/null
+		if [ "x$?" != "x0" ]; then
+			venv_cmnd="venv"
 		fi
+	else
+		venv_cmnd="virtualenv"
 	fi
 
 	if [ -z "${venv_cmnd}" ]; then
