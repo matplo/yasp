@@ -61,12 +61,12 @@ if [ -d ${venvdir} ]; then
 	if [ "x${first_run}" == "xyes" ]; then
 		echo "[i] first run? ${first_run}"
 		echo "python -m pip install --upgrade pip" >> ${tmpfile}
-		echo "python -m pip install pyyaml tqdm" >> ${tmpfile}
+		echo "python -m pip install pyyaml tqdm find_python" >> ${tmpfile}
 		echo "${THISD}/src/yasp.py -i yasp -m" >> ${tmpfile}
 	fi
 	if [ ! -e "${THISD}/.venvstartup.sh" ]; then
 		echo "module use ${THISD}/software/modules" > ${THISD}/.venvstartup.sh
-		echo "module avail" >> ${THISD}/.venvstartup.sh
+		# echo "module avail" >> ${THISD}/.venvstartup.sh
 		echo "module load yasp" >> ${THISD}/.venvstartup.sh
 		echo "module list" >> ${THISD}/.venvstartup.sh
 	fi
