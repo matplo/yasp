@@ -41,10 +41,16 @@ else
 	FASTJETOPT=""
 fi
 
+if [ -d "${OPENLOOPS_DIR}" ]; then
+	OPENLOOPS="--enable-openloops=${OPENLOOPS_DIR}"
+else
+	OPENLOOPS=""
+fi
+
 mpi_opt=--enable-mpi
 extra_opt=""
 {{srcdir}}/configure --prefix={{prefix}} \
-	${LHAPDF6OPT} ${HEPMC2OPT} ${HEPMC3OPT} ${ROOTOPT} ${FASTJETOPT} \
+	${LHAPDF6OPT} ${HEPMC2OPT} ${HEPMC3OPT} ${ROOTOPT} ${FASTJETOPT} ${OPENLOOPS} \
 	--enable-pyext --enable-analysis --enable-gzip --enable-pythia --enable-ufo {{mpi_opt}} {{extra_opt}} \
 	&& make -j {{n_cores}} && make -j {{n_cores}} install
 # --with-python-include="$(python -c "from sysconfig import get_paths; info = get_paths(); print(info['include'])")"
