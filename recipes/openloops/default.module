@@ -1,0 +1,14 @@
+#%Module
+setenv OPENLOOPS_DIR {{prefix}}
+setenv OPENLOOPS_ROOT {{prefix}}
+setenv OPENLOOPS_SYS {{prefix}}
+setenv OPENLOOPSDIR {{prefix}}
+setenv OPENLOOPSROOT {{prefix}}
+setenv OPENLOOPSSYS {{prefix}}
+prepend-path PATH {{prefix}}/bin
+prepend-path DYLD_LIBRARY_PATH {{prefix}}/lib
+prepend-path LD_LIBRARY_PATH {{prefix}}/lib
+prepend-path PYTHONPATH {{prefix}}/lib
+
+prepend-path PYTHONPATH {{prefix}}/lib/{{python_site_packages_subpath}} 
+prepend-path PYTHONPATH {{prefix}}/lib64/{{python_site_packages_subpath}}
