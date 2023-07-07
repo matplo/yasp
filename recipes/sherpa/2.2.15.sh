@@ -48,10 +48,18 @@ else
 fi
 
 mpi_opt=--enable-mpi
+if [ "x{{yasp.os}}" == "xdarwin" ];
+	then
+	sqlite_path=$(xcrun --show-sdk-path)
+	mpi_opt=--disable-mpi
+fi
+
+sqlite_opt="--with-sqlite3=${sqlite_path}/usr"
+
 extra_opt=""
 {{srcdir}}/configure --prefix={{prefix}} \
 	${LHAPDF6OPT} ${HEPMC2OPT} ${HEPMC3OPT} ${ROOTOPT} ${FASTJETOPT} ${OPENLOOPS} \
-	--enable-pyext --enable-analysis --enable-gzip --enable-pythia --enable-ufo {{mpi_opt}} {{extra_opt}} \
+	--enable-pyext --enable-analysis --enable-gzip --enable-pythia --enable-ufo ${mpi_opt} {{extra_opt}} {{sqlite_opt}} \
 	&& make -j {{n_cores}} && make -j {{n_cores}} install
 # --with-python-include="$(python -c "from sysconfig import get_paths; info = get_paths(); print(info['include'])")"
 exit $?
