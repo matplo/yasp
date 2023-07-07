@@ -23,5 +23,7 @@ do
 	echo ${proc} >> basic_jj.coll
 done
 plist=basic_jj.coll
-${srcdir}/scons && ./openloops libinstall {{plist}} && ./openloops libinstall {{plist}} compile_extra=1 && ./openloops update
+rm -rf {{prefix}}
+mkdir -p {{prefix}}
+${srcdir}/scons && ./openloops libinstall {{plist}} && ./openloops libinstall {{plist}} compile_extra=1 && ./openloops update && rsync -avh --progress {{srcdir}}/* {{prefix}}
 exit $?
