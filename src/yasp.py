@@ -223,6 +223,14 @@ class ThreadExec(GenericObject):
 		pbar_l.close()
 		pbar_c.close()
 
+def get_os_name():
+	if sys.platform == "linux" or sys.platform == "linux2":
+		return "linux"
+	elif sys.platform == "darwin":
+		return "darwin"
+	elif sys.platform == "win32":
+		return "win32"
+	return sys.platform
 
 class Yasp(GenericObject):
 	_break = 'stop'
@@ -251,7 +259,8 @@ class Yasp(GenericObject):
 			'yasp_dir' : _yasp_dir,
 			'yasp_src_dir' : _yasp_src_dir,
 			'python_version' : f'{sys.version_info.major}.{sys.version_info.minor}',
-			'python_site_packages_subpath' : f'python{sys.version_info.major}.{sys.version_info.minor}/site-packages'
+			'python_site_packages_subpath' : f'python{sys.version_info.major}.{sys.version_info.minor}/site-packages',
+			'os' : get_os_name()
 	}
 
 	def __init__(self, **kwargs):
@@ -546,6 +555,8 @@ class Yasp(GenericObject):
 
 	def get_definitions_iter(self, _lines):
 		ret_dict = {}
+		if _lines is None:
+			return ret_dict
 		for l in _lines:
 			_d = self.get_definitions([l])
 			ret_dict.update(_d)
