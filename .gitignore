@@ -1,7 +1,8 @@
-/.workdir
+.workdir
 /software
-/__pycache__
+__pycache__
 .yasp.yaml
 .activate
 /venvyasp
 .venvstartup.sh
+.env
