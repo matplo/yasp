@@ -248,19 +248,20 @@ class Yasp(GenericObject):
 	_default_workdir = os.path.join(_yasp_dir, '.workdir')
 	_current_dir = os.path.realpath(os.getcwd())
 	_defaults = {
-			f'{_prog_name}' : _this_file,
-            'default_config' : _default_config,
-		    'current_dir' : _current_dir,
-            'recipe_dirs' : [_default_recipe_dir],
-            'prefix' : _default_prefix,
-            'workdir' : _default_workdir,
-			'download_command' : 'wget --no-check-certificate',
-			'python' : os.path.abspath(os.path.realpath(sys.executable)),
-			'yasp_dir' : _yasp_dir,
-			'yasp_src_dir' : _yasp_src_dir,
-			'python_version' : f'{sys.version_info.major}.{sys.version_info.minor}',
-			'python_site_packages_subpath' : f'python{sys.version_info.major}.{sys.version_info.minor}/site-packages',
-			'os' : get_os_name()
+		f'{_prog_name}' : _this_file,
+        'default_config' : _default_config,
+		'current_dir' : _current_dir,
+        'recipe_dirs' : [_default_recipe_dir],
+		'prefix' : _default_prefix,
+        'workdir' : _default_workdir,
+		'download_command' : 'wget --no-check-certificate',
+		'python' : os.path.abspath(os.path.realpath(sys.executable)),
+		'yasp_dir' : _yasp_dir,
+		'yasp_src_dir' : _yasp_src_dir,
+		'python_version' : f'{sys.version_info.major}.{sys.version_info.minor}',
+		'python_site_packages_subpath' : f'python{sys.version_info.major}.{sys.version_info.minor}/site-packages',
+		'os' : get_os_name(),
+		'cpu_count' : multiprocessing.cpu_count()
 	}
 
 	def __init__(self, **kwargs):
