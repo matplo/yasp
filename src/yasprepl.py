@@ -164,6 +164,13 @@ class YaspReplace(yasp.GenericObject):
 				_rcount += 1
 				if _rcount > YaspReplace._max_repl:
 					print('[e] max replacement count exceeded - break here; something is off - circular replacement?')
+					print('    duplication/circular dep in definitions <<tag>>= and replacement {{<<tag>>}} ?')
+					print('[i] definitions:', _definitions)
+					print(f'[i] replacements: {self.replacements}')
+					for d in _definitions:
+						for r in self.replacements:
+							if d.replace('=','') == r.replace('{{', '').replace('}}', ''):
+								print('[w] problematic candidates:', d, r)
 					exit(-1)
 			new_contents.append(newl)
 		return new_contents
