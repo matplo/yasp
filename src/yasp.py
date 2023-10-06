@@ -552,6 +552,11 @@ class Yasp(GenericObject):
 			for l in _lines:
 				if l[:len(_tag):] == _tag:
 					ret_dict[_tag] = l[len(_tag):].strip('\n')
+		if self.definitions is None:
+			self.definitions = ret_dict
+		else:
+			self.definitions.update(ret_dict)
+		ret_dict = self.definitions
 		return ret_dict
 
 	def get_definitions_iter(self, _lines):
@@ -585,7 +590,7 @@ class Yasp(GenericObject):
 		replaced = False
 		newl = l
 		for r in _replacements:
-			# print(f'-- checking for replacemend of {r}')
+			# print(f'-- checking for replacemend of {r} in {l}')
 			_tag = r[2:][:-2]
 			if r in newl:
 				try:
@@ -775,10 +780,19 @@ class Yasp(GenericObject):
 
 def yasp_feature(what, args={}):
 	sb = Yasp(args=args)
-	try:
-		rv = sb.__getattr__(what)
-	except:
-		rv = None
+	if '.' in what:
+		_w = what.split('.')
+		try:
+			if '=' not in _w[1]:
+				_w[1] = _w[1] + '='
+			rv = sb.__getattr__(_w[0])[_w[1]]
+		except:
+			rv = None		
+	else:
+		try:
+			rv = sb.__getattr__(what)
+		except:
+			rv = None
 	return rv
 
 
