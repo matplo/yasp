@@ -1,5 +1,6 @@
 #%Module
 setenv GSL_DIR {{prefix}}
+setenv GSL_ROOT_DIR {{prefix}}
 setenv GSL_VERSION {{version}}
 prepend-path PATH {{prefix}}/bin
 prepend-path DYLD_LIBRARY_PATH {{prefix}}/lib
