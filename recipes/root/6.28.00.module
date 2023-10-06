@@ -1,6 +1,7 @@
 #%Module
 setenv ROOTSYS {{prefix}}
 setenv ROOT_DIR {{prefix}}
+setenv ROOT_VERSION {{version}}
 prepend-path PATH {{prefix}}/bin
 prepend-path DYLD_LIBRARY_PATH {{prefix}}/lib
 prepend-path LD_LIBRARY_PATH {{prefix}}/lib
