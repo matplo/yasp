@@ -793,6 +793,8 @@ def yasp_feature(what, args={}):
 			rv = sb.__getattr__(what)
 		except:
 			rv = None
+		if rv is None:
+			rv = yasp_feature(f'definitions.{what}', args)
 	return rv
 
 
