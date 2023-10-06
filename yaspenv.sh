@@ -33,6 +33,8 @@ if [ ! -d ${venvdir} ]; then
 		echo "[w] no virtualenv - trying venv"
 		python3 -m venv -h 2>&1 >> /dev/null
 		if [ "x$?" != "x0" ]; then
+			echo "[w] python3 -m venv -h returned $?"
+		else
 			venv_cmnd="venv"
 		fi
 	else
