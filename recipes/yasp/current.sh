@@ -8,7 +8,7 @@ mkdir -pv {{prefix}}/bin
 ln -sv {{yasp.yasp_src_dir}}/*.py {{prefix}}/bin
 ln -sv {{prefix}}/bin/yasp.py {{prefix}}/bin/yasp
 ln -sv {{prefix}}/bin/yasprepl.py {{prefix}}/bin/yasprepl
-ln -sv {{prefix}}/bin/yasprepl.py {{prefix}}/bin/yaspreplstring
+ln -sv {{prefix}}/bin/yaspreplstring.py {{prefix}}/bin/yaspreplstring
 
 rm -rf {{prefix}}/lib
 python_dest_path={{prefix}}/lib/{{python_site_packages_subpath}}
