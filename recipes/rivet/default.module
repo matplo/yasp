@@ -1,0 +1,14 @@
+#%Module
+setenv RIVET_DIR {{prefix}}
+prepend-path PATH {{prefix}}/bin
+prepend-path PATH {{prefix}}
+prepend-path DYLD_LIBRARY_PATH {{prefix}}/lib
+prepend-path LD_LIBRARY_PATH {{prefix}}/lib
+prepend-path PYTHONPATH {{prefix}}/lib
+
+# source ROOT/rivetenv.sh
+# rivet --help
+# rivet --list-analyses
+
+# source-sh bash {{prefix}}/rivetenv.sh
+set-alias rivetenv {source {{prefix}}/rivetenv.sh}
