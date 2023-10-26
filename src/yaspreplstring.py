@@ -7,14 +7,14 @@ import yasp
 import yaml
 import re
 
-class YaspReplace(yasp.GenericObject):
+class YaspReplaceString(yasp.GenericObject):
 	_default_config = os.path.join(yasp.get_this_directory(), '.yasp.yaml')
 	_max_repl = 10000
 	_defaults = {}
 	def __init__(self, **kwargs):
-		super(YaspReplace, self).__init__(**kwargs)
+		super(YaspReplaceString, self).__init__(**kwargs)
 		self.set_defaults()
-		self.configure_from_config(YaspReplace._default_config)
+		self.configure_from_config(YaspReplaceString._default_config)
 		if self.args:
 			if self.args.use_config:
 				self.configure_from_config(self.args.use_config)
@@ -34,9 +34,9 @@ class YaspReplace(yasp.GenericObject):
 		self.write_output_file(self.output, _output, False)
 
 	def set_defaults(self):
-		for d in YaspReplace._defaults:
+		for d in YaspReplaceString._defaults:
 			if self.__getattr__(d) is None:
-				self.__setattr__(d, YaspReplace._defaults[d])
+				self.__setattr__(d, YaspReplaceString._defaults[d])
 			else:
 				print(self.__getattr__(d))
 
@@ -82,60 +82,16 @@ class YaspReplace(yasp.GenericObject):
 			_contents = f.readlines()
 		return _contents
 
-	def get_definitions(self, _lines):
-		ret_dict = {}
-		s = ''.join(_lines)
-		if len(s) < 1:
-			return ret_dict
-		if len(s) < 1:
-			return ret_dict
-		regex = r"[\w]+="
-		matches = re.finditer(regex, s, re.MULTILINE)
-		for m in matches:
-			_tag = m.group(0)
-			for l in _lines:
-				if l[:len(_tag):] == _tag:
-					ret_dict[_tag] = l[len(_tag):].strip('\n')
-		return ret_dict
-
-	def get_definitions_iter(self, _lines):
-		ret_dict = {}
-		for l in _lines:
-			_d = self.get_definitions([l])
-			ret_dict.update(_d)
-		return ret_dict
-
-	def get_replacements(self, _lines):
-		# regex = r"{{[a-zA-Z0-9_]+}}*"
-		regex = r"{}".format(self.pattern)
-		matches = re.finditer(regex, ''.join(_lines), re.MULTILINE)
-		rv_matches = []
-		for m in matches:
-			if m.group(0) not in rv_matches:
-				rv_matches.append(m.group(0).strip('\n'))
-		return rv_matches
-
-	def replace_in_line(self, l, _definitions, _replacements):
+	def replace_in_line(self, l, _replacements):
 		replaced = False
 		newl = l
 		for r in _replacements:
-			# print(f'-- checking for replacemend of {r} in {_replacements} - defs are {_definitions}')
-			if self.no_bracket_tag is True:
-				_tag = r
-			else:
-				_tag = r[2:][:-2]
-			# print(f'tag is {_tag} {r} {self.no_bracket_tag}')
-			if r in newl:
-				try:
-					_repls = _definitions[_tag+'=']
-				except KeyError:
-					if '.' in _tag:
-						_tag = _tag.split('.')[1]
-					_repls = str(self.__getattr__(_tag))
-				if _repls is None:
-					_repls = ""
-				newl = newl.replace(r, _repls)
-				replaced = True
+			if r[0] in newl:
+				newl = newl.replace(r[0], r[1])
+				if self.verbose:
+					print(f'replacing {r[0]} with {r[1]} in {l} :=> {newl}')
+				if newl != l:
+					replaced = True
 		return newl, replaced
 
 	def process_replacements(self, input_string, input_file):
@@ -147,36 +103,19 @@ class YaspReplace(yasp.GenericObject):
 			print(f'[i] contents: {_contents}')
 		if self.replacements is None:
 			self.replacements = []
-		self.replacements.extend(self.get_replacements(_contents))
-		if self.verbose:
-			print(f'[i] replacements: {self.replacements}')
-		_definitions = self.get_definitions(_contents)
-		if self.define:
-			_defs_args = self.get_definitions_iter(self.define)
-			_definitions.update(_defs_args)
-		if self.verbose:
-			print('[i] definitions:', _definitions)
-		if self.verbose:
-			print('[i] number of replacements found', len(self.replacements))
-			print('   ', self.replacements)
+		_replacements = []
+		for d in self.define:
+			try:
+				from_repl = d.split('=')[0]
+				to_repl = d.split('=')[1]
+				_replacements.append([from_repl, to_repl])
+			except:
+				pass
 		new_contents = []
 		for l in _contents:
-			newl = l
-			replaced = True
-			_rcount = 0
-			while replaced:
-				newl, replaced = self.replace_in_line(newl, _definitions, self.replacements)
-				_rcount += 1
-				if _rcount > YaspReplace._max_repl:
-					print('[e] max replacement count exceeded - break here; something is off - circular replacement?')
-					print('    duplication/circular dep in definitions <<tag>>= and replacement {{<<tag>>}} ?')
-					print('[i] definitions:', _definitions)
-					print(f'[i] replacements: {self.replacements}')
-					for d in _definitions:
-						for r in self.replacements:
-							if d.replace('=','') == r.replace('{{', '').replace('}}', ''):
-								print('[w] problematic candidates:', d, r)
-					exit(-1)
+			newl, replaced = self.replace_in_line(l, _replacements)
+			if replaced:
+				self.replacements.append(f"[{l.strip()}] -> [{newl.strip()}]")
 			new_contents.append(newl)
 		return new_contents
 
@@ -186,11 +125,11 @@ class YaspReplace(yasp.GenericObject):
 				f.writelines(contents)
 			if executable:
 				os.chmod(outfname, stat.S_IRWXU)
+			if self.verbose:
+				print('[i] written:', outfname, file=sys.stderr)
 		else:
 			sys.stdout.writelines(contents)
 			sys.stdout.write('\n')
-		if self.verbose:
-			print('[i] written:', outfname, file=sys.stderr)
 
 
 def add_arguments_to_parser(parser):
@@ -203,8 +142,6 @@ def add_arguments_to_parser(parser):
 	parser.add_argument('--verbose', help='print some extra info', action='store_true', default=False)
 	parser.add_argument('--show', help='show what`s possible', action='store_true', default=False)
 	parser.add_argument('--dry-run', help='dry run - do not execute output script', action='store_true', default=False)
-	parser.add_argument('--pattern', help='what pattern to replace - default is {{[a-zA-Z0-9_]+}}*', type=str, default="{{[a-zA-Z0-9_]+}}*")
-	parser.add_argument('-w', '--no-bracket-tag', help='do not use {{}} tag - default is False', action='store_true', default=False)
 
 def main():
 	parser = argparse.ArgumentParser()
@@ -212,7 +149,7 @@ def main():
 	args = parser.parse_args()
 
 	args.input = ';'.join([';'.join(s.split('\n')) for s in args.input])
-	yr = YaspReplace(args=args)
+	yr = YaspReplaceString(args=args)
 
 
 if __name__=="__main__":
