@@ -16,6 +16,11 @@ njobs=$(yasp -q feature cpu_count)
 export MAKE="make -j${njobs}"
 export CMAKE="cmake"
 
+if [ "{{dev}}" != "None" ]; then
+	echo "[i] setting INSTALL_RIVETDEV to 1"
+	export INSTALL_RIVETDEV=1
+fi
+
 if [ "{{bootstrap}}" == "None" ] || [ "{{bootstrap}}" == "true" ]; then
 	{{local_file}}
 	else
