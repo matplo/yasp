@@ -27,8 +27,16 @@ if [ "{{bootstrap}}" == "None" ] || [ "{{bootstrap}}" == "true" ]; then
 	echo "[w] requested not to run bootstrap"
 fi
 
+force_jewel_flag={{force_jewel}}
+
 if [ "{{jewel}}" != "None" ]; then
-	echo "[i] get the jewel subtraction {{jewel}}"
+    if [ -e "{{builddir}}/Rivet-{{version}}/src/Projections/SubtractedJewelEvent.cc" ]; then
+	echo "[w] detected JEWEL routines - overwrite with --define force_jewel=true"
+    else
+	force_jewel_flag="true"
+    fi
+    if [ ${force_jewel_flag} == "true" ]; then
+	echo "[i] get the jewel subtraction {{jewel}} - ${force_jewel_flag}:{{force_jewel}}"
 	echo "$PWD"
 	jewel_out={{workdir}}/jewel_ConstSubProjection.tar
 	{{yasp}} --download https://jewel.hepforge.org/files/ConstSubProjection.tar --output ${jewel_out}
@@ -50,7 +58,8 @@ if [ "{{jewel}}" != "None" ]; then
 	else
 		echo "[w] NOT MODIFYING THE AM FILE - already modified"
 	fi
-	cd {{builddir}}/Rivet-{{version}} && make -j${njobs} && make install
+    fi
+    cd {{builddir}}/Rivet-{{version}} && autoreconf -i && make -j${njobs} && make install
 fi
 
 exit $?
