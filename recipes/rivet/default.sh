@@ -16,7 +16,11 @@ njobs=$(yasp -q feature cpu_count)
 export MAKE="make -j${njobs}"
 export CMAKE="cmake"
 
-{{local_file}}
+if [ "{{bootstrap}}" == "None" ] || [ "{{bootstrap}}" == "true" ]; then
+	{{local_file}}
+	else
+	echo "[w] requested not to run bootstrap"
+fi
 
 if [ "{{jewel}}" != "None" ]; then
 	echo "[i] get the jewel subtraction {{jewel}}"
