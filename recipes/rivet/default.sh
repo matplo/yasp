@@ -16,7 +16,7 @@ njobs=$(yasp -q feature cpu_count)
 export MAKE="make -j${njobs}"
 export CMAKE="cmake"
 
-# {{local_file}}
+{{local_file}}
 
 if [ "{{jewel}}" != "None" ]; then
 	echo "[i] get the jewel subtraction {{jewel}}"
