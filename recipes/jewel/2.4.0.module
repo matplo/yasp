@@ -1,0 +1,3 @@
+#%Module
+setenv JEWEL_DIR {{prefix}}
+prepend-path PATH {{prefix}}/bin
