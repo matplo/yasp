@@ -108,6 +108,11 @@ class ConfigData(GenericObject):
 			self.configure_from_dict(self.args.__dict__)
 		self.verbose = self.debug
 
+def shell_exec(command):
+	process = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+	stdout = process.stdout
+	stderr = process.stderr
+	return process.returncode, stdout, stderr
 
 def exec_cmnd_thread(cmnd, verbose, shell):
 	# _args = shlex.split(cmnd)
