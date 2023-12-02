@@ -26,7 +26,7 @@ if [ ! -e Makefile.orig ]; then
 	cp -v Makefile Makefile.orig
 fi
 le -fi Makefile.orig -o Makefile -r /path/to/lhapdf::${LHAPDF6_DIR}/lib
-le -fi Makefile -o Makefile -r /home/lhapdf6/install/lib/::${LHAPDF6_DIR}/lib
+le -fi Makefile -o Makefile -r /home/lhapdf/install/lib/::${LHAPDF6_DIR}/lib
 
 if [ "{{rebuild}}" != "None" ]; then
 	echo "make clean first... {{rebuild}}"
