@@ -54,11 +54,16 @@ if [ "x{{yasp.os}}" == "xdarwin" ];
 	mpi_opt=--disable-mpi
 fi
 
-if [ "{{c++11}}" != "" ]; then
+if [ "{{cxx11}}" == "true" ]; then
     # needed for x-compiling with HEPMC3 - unclear whether this should stay
     export CXXFLAGS="-std=c++11"
-    echo "$CXXFLAGS"
-    exit $?
+    echo "[i] CXXFLAGS set to $CXXFLAGS"
+fi    
+
+if [ "{{cxx14}}" == "true" ]; then
+    # needed for x-compiling with HEPMC3 - unclear whether this should stay
+    export CXXFLAGS="-std=c++14"
+    echo "[i] CXXFLAGS set to $CXXFLAGS"
 fi    
 
 sqlite_opt="--with-sqlite3=${sqlite_path}/usr"
