@@ -1,0 +1,9 @@
+#%Module
+setenv LHAPDF6_DIR {{prefix}}
+setenv LHAPDF6_VERSION {{version}}
+prepend-path PATH {{prefix}}/bin
+prepend-path DYLD_LIBRARY_PATH {{prefix}}/lib
+prepend-path LD_LIBRARY_PATH {{prefix}}/lib
+prepend-path PYTHONPATH {{prefix}}/lib
+prepend-path PYTHONPATH {{prefix}}/lib64/{{python_site_packages_subpath}}
+prepend-path PYTHONPATH {{prefix}}/lib/{{python_site_packages_subpath}}
