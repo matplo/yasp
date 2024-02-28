@@ -1,6 +1,7 @@
 #%Module
 setenv HEPMC3_DIR {{prefix}}
 setenv HEPMC3DIR {{prefix}}
+setenv HEPMC3_VERSION {{version}}
 prepend-path PATH {{prefix}}/bin
 prepend-path DYLD_LIBRARY_PATH {{prefix}}/lib
 prepend-path LD_LIBRARY_PATH {{prefix}}/lib

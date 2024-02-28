@@ -99,7 +99,7 @@ to execute within pipenv... essentially any arg is passed to pipenv... no args d
 - for example this will install fastjet, fastjet contributed algos, and pythia8 to prefix dir (default is $HOME/yasp)
 
 ```
-./yasp.py --install fastjet/3.4.0 fjcontrib/1.050 pythia8/8308 --prefix /tmp/yaspsoft
+./yasp.py --install fastjet/3.4.2 fjcontrib/1.053 pythia8/8310 --prefix /tmp/yaspsoft
 ```
 
 - yasp can write a small file for automatic configuration in the future (`.yasp.yml`) in --use-config location (default is where yasp.py is)

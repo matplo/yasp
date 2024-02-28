@@ -2,7 +2,6 @@
 
 cd {{workdir}}
 version=6.28.12
-#yasp --set version=6.26.10
 url=https://root.cern/download/root_v{{version}}.source.tar.gz
 local_file={{workdir}}/root_v{{version}}.tar.gz
 {{yasp}} --download {{url}} --output {{local_file}}
