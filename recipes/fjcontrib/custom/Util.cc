@@ -1,4 +1,4 @@
-#include "RecursiveTools/Util.hh"
+#include "Util.hh"
 
 FASTJET_BEGIN_NAMESPACE      // defined in fastjet/internal/base.hh
 

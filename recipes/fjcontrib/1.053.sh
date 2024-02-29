@@ -22,16 +22,16 @@ fi
 #	   fastjet_prefix=$({{yasp}} -q feature prefix -i fastjet)
 #fi
 fastjet_prefix=$(fastjet-config --prefix)
-# this produces only static libs
 fjlibs=$(${fjconfig} --libs --plugins)
-./configure --fastjet-config=${fjconfig} --prefix=${fastjet_prefix} LDFLAGS="${fjlibs}" && make -j {{n_cores}} all && make check && make install
-make -j {{n_cores}} fragile-shared && make fragile-shared-install  # Fragile dynamic library for jetflav
-# add a cmake for dynamic libs!
+./configure --fastjet-config=${fjconfig} --prefix=${fastjet_prefix} LDFLAGS="${fjlibs}"
+make -j {{n_cores}} all && make check && make install  # Static libraries
+make -j {{n_cores}} fragile-shared && make fragile-shared-install  # Fragile dynamic library
 if [ $? -eq 0 ]
 then
 	make distclean
-	./configure --fastjet-config=${fjconfig} --prefix=${fastjet_prefix} CXXFLAGS=-fPIC LDFLAGS="${fjlibs}" && make -j {{n_cores}} all && make check && make install
-	make -j {{n_cores}} fragile-shared && make fragile-shared-install  # Fragile dynamic library for jetflav
+	./configure --fastjet-config=${fjconfig} --prefix=${fastjet_prefix} CXXFLAGS=-fPIC LDFLAGS="${fjlibs}"
+	make -j {{n_cores}} all && make check && make install  # Static libraries
+	make -j {{n_cores}} fragile-shared && make fragile-shared-install  # Fragile dynamic library
 	contribs=$(./configure --list)
 	for c in ${contribs}
 	do

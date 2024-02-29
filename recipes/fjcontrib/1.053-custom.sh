@@ -20,21 +20,23 @@ else
 	echo "[i] using ${fjconfig}"
 fi
 
-################ Apply patches #################
+echo "==================== Apply patches ===================="
 recipe_dir={{yasp_dir}}/recipes/fjcontrib
 # RecursiveTools
 patch {{srcdir}}/RecursiveTools/RecursiveSymmetryCutBase.hh -i ${recipe_dir}/patches/RecursiveSymmetryCutBase.patch
 cp -v ${recipe_dir}/custom/Util.* {{srcdir}}/RecursiveTools
+patch {{srcdir}}/RecursiveTools/Makefile -i ${recipe_dir}/patches/RecursiveTools_Makefile.patch
 # LundPlane
 patch {{srcdir}}/LundPlane/SecondaryLund.hh -i ${recipe_dir}/patches/SecondaryLund.patch
 patch {{srcdir}}/LundPlane/LundGenerator.hh -i ${recipe_dir}/patches/LundGenerator.patch
 cp -v ${recipe_dir}/custom/DynamicalGroomer.* {{srcdir}}/LundPlane
 cp -v ${recipe_dir}/custom/GroomerShop.* {{srcdir}}/LundPlane
+patch {{srcdir}}/LundPlane/Makefile -i ${recipe_dir}/patches/LundPlane_Makefile.patch
 # ConstituentSubtractor -- nothing to do
 # Nsubjettiness
 patch {{srcdir}}/Nsubjettiness/MeasureDefinition.hh -i ${recipe_dir}/patches/MeasureDefinition.patch
 patch {{srcdir}}/Nsubjettiness/AxesDefinition.hh -i ${recipe_dir}/patches/AxesDefinition.patch
-################################################
+echo "======================================================="
 
 # the line below would use the default fj picked by yasp - not always what wanted...
 #if [ -z "${fastjet_prefix}" ]; then
