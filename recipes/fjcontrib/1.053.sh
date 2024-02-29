@@ -25,11 +25,13 @@ fastjet_prefix=$(fastjet-config --prefix)
 # this produces only static libs
 fjlibs=$(${fjconfig} --libs --plugins)
 ./configure --fastjet-config=${fjconfig} --prefix=${fastjet_prefix} LDFLAGS="${fjlibs}" && make -j {{n_cores}} all && make check && make install
+make -j {{n_cores}} fragile-shared && make fragile-shared-install  # Fragile dynamic library for jetflav
 # add a cmake for dynamic libs!
 if [ $? -eq 0 ]
 then
-	make clean
+	make distclean
 	./configure --fastjet-config=${fjconfig} --prefix=${fastjet_prefix} CXXFLAGS=-fPIC LDFLAGS="${fjlibs}" && make -j {{n_cores}} all && make check && make install
+	make -j {{n_cores}} fragile-shared && make fragile-shared-install  # Fragile dynamic library for jetflav
 	contribs=$(./configure --list)
 	for c in ${contribs}
 	do
