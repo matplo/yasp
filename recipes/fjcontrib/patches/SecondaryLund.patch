@@ -1,0 +1,14 @@
+--- test/build/fjcontrib-1.041/LundPlane/SecondaryLund.hh	2018-12-22 01:42:01.000000000 -0800
++++ lundplane/include/LundPlane/SecondaryLund.hh	2019-06-19 17:29:20.000000000 -0700
+@@ -40,7 +40,11 @@
+   virtual ~SecondaryLund() {}
+ 
+   /// returns the index of branch corresponding to the root of the secondary plane
++#ifndef SWIGPYTHON
+   virtual int result(const std::vector<LundDeclustering> & declusts) const = 0;
++#else
++  virtual int result(const std::vector<LundDeclustering> & declusts) const {return 0.0;}
++#endif
+ 
+   int operator()(const std::vector<LundDeclustering> & declusts) const {
+     return result(declusts);

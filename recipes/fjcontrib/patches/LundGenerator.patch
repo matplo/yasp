@@ -1,0 +1,20 @@
+--- /tmp/fjcontrib-1.041/LundPlane/LundGenerator.hh	2018-12-22 01:42:01.000000000 -0800
++++ lundplane/include/LundPlane/LundGenerator.hh	2019-06-19 19:34:43.000000000 -0700
+@@ -52,6 +52,8 @@
+ class LundDeclustering {
+ public:
+ 
++  LundDeclustering() : m_(-1.), Delta_(-1.), z_(-1.), kt_(0), kappa_(-1.), psi_(0), pair_(), harder_(), softer_() {;}
++  virtual void reset() {m_=-1.; Delta_=-1.; z_=-1; kt_=0; kappa_=-1.; psi_ = 0; pair_ *= 0; harder_ *= 0; softer_ *= 0;}
+   /// return the pair PseudoJet, i.e. sum of the two subjets
+   const PseudoJet & pair()  const {return pair_;}
+   /// returns the subjet with larger transverse momentum
+@@ -90,7 +92,7 @@
+   double m_, Delta_, z_, kt_, kappa_, psi_;
+   PseudoJet pair_, harder_, softer_;
+ 
+-protected:
++public:
+   /// the constructor is private, because users will not generally be
+   /// constructing a LundDeclustering element themselves.
+   LundDeclustering(const PseudoJet& pair,
