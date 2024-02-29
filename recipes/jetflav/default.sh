@@ -9,6 +9,10 @@ else
 	echo "[i] using ${fjconfig}"
 fi
 
+# Check FastJet version -- IFN requires minimum 3.4.1
+fjconfig_version=$(fastjet-config --version)
+echo "FastJet version: [${fjconfig_version}] // minimum required: [3.4.1]"
+
 # IFNPlugin  https://github.com/jetflav/IFNPlugin
 cd {{workdir}}
 url_IFN=https://github.com/jetflav/IFNPlugin/archive/refs/heads/main.zip
