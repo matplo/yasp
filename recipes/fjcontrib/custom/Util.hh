@@ -2,7 +2,7 @@
 #define __FASTJET_CONTRIB_UTIL_HH__
 
 #include <fastjet/PseudoJet.hh>
-#include <RecursiveTools/SoftDrop.hh>
+#include "SoftDrop.hh"
 
 FASTJET_BEGIN_NAMESPACE      // defined in fastjet/internal/base.hh
 
