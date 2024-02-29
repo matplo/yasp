@@ -1,0 +1,61 @@
+--- /Users/ploskon/tmp/fjcontrib-1.042/Nsubjettiness/MeasureDefinition.hh	2019-07-18 05:58:16.000000000 -0700
++++ /Users/ploskon/devel/heppy/cpptools/src/fjcontrib/fjcontrib-1.042/Nsubjettiness/MeasureDefinition.hh	2021-02-28 22:57:02.000000000 -0800
+@@ -80,12 +80,12 @@
+ class MeasureDefinition {
+    
+ public:
+-   
++
+    /// Description of measure and parameters
+-   virtual std::string description() const = 0;
++   virtual std::string description() const {std::string s = "not implemented"; return s;} // MP
+    
+    /// In derived classes, this should return a copy of the corresponding derived class
+-   virtual MeasureDefinition* create() const = 0;
++   virtual MeasureDefinition* create() const {return (MeasureDefinition*)0x0;} // MP
+ 
+    //The following five functions define the measure by which tau_N is calculated,
+    //and are overloaded by the various measures below
+@@ -103,12 +103,12 @@
+    }
+    
+    /// The jet measure used in N-(sub)jettiness
+-   virtual double jet_numerator(const fastjet::PseudoJet& particle, const fastjet::PseudoJet& axis) const = 0;
++   virtual double jet_numerator(const fastjet::PseudoJet& particle, const fastjet::PseudoJet& axis) const {return 0.0;} // MP
+    /// The beam measure used in N-(sub)jettiness
+-   virtual double beam_numerator(const fastjet::PseudoJet& particle) const = 0;
++   virtual double beam_numerator(const fastjet::PseudoJet& particle) const {return 0.0;} // MP
+    
+    /// A possible normalization factor
+-   virtual double denominator(const fastjet::PseudoJet& particle) const = 0;
++   virtual double denominator(const fastjet::PseudoJet& particle) const {return 0.0;} // MP
+    
+    /// Run a one-pass minimization routine.  There is a generic one-pass minimization that works for a wide variety of measures.
+    /// This should be overloaded to create a measure-specific minimization scheme
+@@ -145,7 +145,8 @@
+    /// virtual destructor
+    virtual ~MeasureDefinition(){}
+    
+-protected:
++// protected:
++   public:
+    
+    /// Flag set by derived classes to choose whether or not to use beam/denominator
+    TauMode _tau_mode;
+@@ -260,7 +261,7 @@
+                                                              double accuracy  // cap distance of closest approach
+                                                              ) const;
+    
+-protected:
++   protected:
+    double _beta;      ///< Angular exponent
+    double _R0;        ///< Normalization factor
+    double _Rcutoff;   ///< Cutoff radius
+@@ -268,6 +269,7 @@
+    DefaultMeasureType _measure_type;  ///< Type of measure used (i.e. pp style or ee style)
+    
+    
++   public: // MP
+    /// Constructor is protected so that no one tries to call this directly.
+    DefaultMeasure(double beta, double R0, double Rcutoff, DefaultMeasureType measure_type = pt_R)
+    : MeasureDefinition(), _beta(beta), _R0(R0), _Rcutoff(Rcutoff), _RcutoffSq(sq(Rcutoff)), _measure_type(measure_type)
