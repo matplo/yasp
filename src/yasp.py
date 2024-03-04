@@ -477,11 +477,18 @@ class Yasp(GenericObject):
 						if self.clean:
 							self.do_clean()
 						continue
-					if self.dry_run or self.query:
+					if self.dry_run or self.query or self.show:
 						if self.dry_run:
 							if self.verbose:
 								print(f'[i] this is dry run - stopping before executing {self.output_script}', file=sys.stderr)
 								print(self, file=sys.stderr)
+						if self.show:
+							print(f'[i] this is dry run - stopping before executing {self.output_script} - here it is:', file=sys.stderr)
+							for s in self.build_script_contents:
+								print(s.strip(), file=sys.stderr)
+							print(f'\n[i] this is dry run - module {self.module_output_fname} - is:', file=sys.stderr)
+							for s in self.module_contents:
+								print(s.strip(), file=sys.stderr)
 						continue
 
 					if self.module_only:
@@ -840,6 +847,7 @@ def add_arguments_to_parser(parser):
 	parser.add_argument('--clean', help='start from scratch', action='store_true', default=False)
 	parser.add_argument('--redownload', help='redownload even if file already there', action='store_true', default=False)
 	parser.add_argument('--dry-run', help='dry run - do not execute output script', action='store_true', default=False)
+	parser.add_argument('--show', help='dry run - show the output script', action='store_true', default=False)
 	parser.add_argument('--recipe-dir', help='dir where recipes info sit - default: {}'.format(Yasp._default_recipe_dir), type=str)
 	parser.add_argument('--add-recipe-dir', help='add dir where recipes info sit', type=str, nargs='+')
 	parser.add_argument('-o', '--output', help='output definition - for example for download', default='default.output', type=str)
