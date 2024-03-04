@@ -485,10 +485,11 @@ class Yasp(GenericObject):
 						if self.show:
 							print(f'[i] this is dry run - stopping before executing {self.output_script} - here it is:', file=sys.stderr)
 							for s in self.build_script_contents:
-								print(s.strip(), file=sys.stderr)
-							print(f'\n[i] this is dry run - module {self.module_output_fname} - is:', file=sys.stderr)
-							for s in self.module_contents:
-								print(s.strip(), file=sys.stderr)
+								print(s.rstrip(), file=sys.stderr)
+							if self.module_contents:
+								print(f'\n[i] this is dry run - module {self.module_output_fname} - is:', file=sys.stderr)
+								for s in self.module_contents:
+									print(s.rstrip(), file=sys.stderr)
 						continue
 
 					if self.module_only:
