@@ -9,8 +9,10 @@ url=https://hepmc.web.cern.ch/hepmc/releases/hepmc{{version}}.tgz
 local_file={{workdir}}/hepmc{{version}}.tgz
 {{yasp}} --download {{url}} --output {{local_file}}
 tar zxvf {{local_file}}
-#srcdir={{workdir}}/HepMC-{{version}}
-srcdir={{workdir}}/hepmc{{version}}
+srcdir={{workdir}}/HepMC-{{version}}
+if [ ! -d ${srcdir} ]; then
+    srcdir={{workdir}}/hepmc{{version}}
+fi
 cd {{builddir}}
 
 cmake -Dmomentum:STRING=GEV -Dlength:STRING=CM \
