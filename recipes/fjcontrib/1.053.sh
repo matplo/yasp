@@ -5,7 +5,8 @@ version=1.053
 url=https://fastjet.hepforge.org/contrib/downloads/fjcontrib-{{version}}.tar.gz
 local_file={{workdir}}/fjcontrib-{{version}}.tar.gz
 {{yasp}} --download {{url}} --output {{local_file}}
-tar zxvf {{local_file}} --warning=no-unknown-keyword
+# tar zxvf {{local_file}} --warning=no-unknown-keyword
+tar zxvf {{local_file}} 
 srcdir={{workdir}}/fjcontrib-{{version}}
 cd {{srcdir}}
 rm .[!.]* */.[!.]*  # Remove unnecessary dotfiles
