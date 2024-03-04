@@ -30,6 +30,7 @@ function lib_suffix()
 cd {{workdir}}
 version=jetflav
 url=git@github.com:jetflav/IFNPlugin.git
+url=https://github.com/jetflav/IFNPlugin.git
 local_file={{workdir}}/IFNPlugin.git
 # {{yasp}} --download {{url}} --output {{local_file}}
 git clone {{url}} {{local_file}}
