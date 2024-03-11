@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cd {{workdir}}
-version=1.053
+version=1.054
 url=https://fastjet.hepforge.org/contrib/downloads/fjcontrib-{{version}}.tar.gz
 local_file={{workdir}}/fjcontrib-{{version}}.tar.gz
 {{yasp}} --download {{url}} --output {{local_file}}
