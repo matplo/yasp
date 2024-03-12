@@ -9,7 +9,6 @@ local_file={{workdir}}/fjcontrib-{{version}}.tar.gz
 tar zxvf {{local_file}} 
 srcdir={{workdir}}/fjcontrib-{{version}}
 cd {{srcdir}}
-rm .[!.]* */.[!.]*  # Remove unnecessary dotfiles
 fjconfig=$(which fastjet-config)
 if [ ! -e "${fjconfig}" ]; then
 	echo "[e] no fastjet-config [${fjconfig} ] this will not work"
@@ -24,12 +23,12 @@ fi
 fastjet_prefix=$(fastjet-config --prefix)
 fjlibs=$(${fjconfig} --libs --plugins)
 ./configure --fastjet-config=${fjconfig} --prefix=${fastjet_prefix} LDFLAGS="${fjlibs}"
-make -j {{n_cores}} all && make check && make install  # Static libraries
+make -j {{n_cores}} fragile-shared && make fragile-shared-install  # Fragile dynamic library
 if [ $? -eq 0 ]
 then
 	make distclean
 	./configure --fastjet-config=${fjconfig} --prefix=${fastjet_prefix} CXXFLAGS=-fPIC LDFLAGS="${fjlibs}"
-	make -j {{n_cores}} all && make check && make install  # Static libraries
+	make -j {{n_cores}} fragile-shared && make fragile-shared-install  # Fragile dynamic library
 	contribs=$(./configure --list)
 	for c in ${contribs}
 	do
