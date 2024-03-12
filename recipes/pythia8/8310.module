@@ -1,6 +1,7 @@
 #%Module
 setenv PYTHIA8_DIR {{prefix}}
 setenv PYTHIA8_ROOT {{prefix}}
+setenv PYTHIA8_ROOT_DIR {{prefix}}
 setenv PYTHIA8_SYS {{prefix}}
 setenv PYTHIA8DIR {{prefix}}
 setenv PYTHIA8ROOT {{prefix}}
