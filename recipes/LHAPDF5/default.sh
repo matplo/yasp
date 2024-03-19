@@ -11,7 +11,10 @@ srcdir={{workdir}}/lhapdf-{{version}}
 # {{srcdir}}/configure --prefix={{prefix}} ${other_opts} && make -j {{n_cores}} && make install
 cd {{srcdir}}
 # ./configure --prefix={{prefix}} ${other_opts} --with-python-sys-prefix && make -j {{n_cores}} && make install
-export FFLAGS="-std=legacy"
+# export FFLAGS="-std=legacy"
+# export FCFLAGS=-std=f2008
+export FCFLAGS=-fallow-obsolete
+# ./configure --help
 ./configure --prefix={{prefix}} ${other_opts} --disable-pyext && make -j {{n_cores}} && make install
 excode=$?
 
