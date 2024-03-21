@@ -1,0 +1,3 @@
+#%Module
+setenv POWHEG_DIR {{prefix}}
+prepend-path PATH {{prefix}}/bin
