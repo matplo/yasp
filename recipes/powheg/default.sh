@@ -68,7 +68,7 @@ for p in ${plist[@]}; do
 			mkdir -p {{prefix}}/bin
 			cp -v pwhg_main {{prefix}}/bin/pwhg_${p}
 			if [ "0x$?" == "0x0" ]; then
-				echo "[e] $p build"
+				echo "[i] $p build"
 			else
 				echo "[e] error building $p"
 				exit 1
