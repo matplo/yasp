@@ -39,6 +39,8 @@ fi
 
 if [ "${plist}" == "None" ]; then
 	echo "[w] no processes specified - listing"
+	echo "[i] to compile a process use --define proc=process_name1,process_name2,..."
+	echo "    or --define proc=all"
 	echo "${plist_all}"
 	exit 0
 fi
@@ -57,14 +59,14 @@ for p in ${plist[@]}; do
 		fi
 		if [ "0x$?" == "0x0" ]; then
 			cd {{srcdir}}/${p}
-		    echo "[i] building $p in $PWD"
+			echo "[i] building $p in $PWD"		
+			cp -v Makefile Makefile.patched
 			if [ "{{yasp.os}}" == "Darwin" ]; then
-				sed -i '' 's/\$(DEBUG) -c/\$(DEBUG) -std=c++11 -c/g' Makefile
+				sed -i '' 's/\$(DEBUG) -c/\$(DEBUG) -std=c++11 -c/g' Makefile.patched
 			else
-				sed -i.bak 's/\$(DEBUG) -c/\$(DEBUG) -std=c++11 -c/g' Makefile
+				sed -i.bak 's/\$(DEBUG) -c/\$(DEBUG) -std=c++11 -c/g' Makefile.patched
 			fi
-			sed -i '' 's/\$(DEBUG) -c/\$(DEBUG) -std=c++11 -c/g' Makefile
-			make pwhg_main
+			make -f Makefile.patched pwhg_main
 			mkdir -p {{prefix}}/bin
 			cp -v pwhg_main {{prefix}}/bin/pwhg_${p}
 			if [ "0x$?" == "0x0" ]; then
@@ -84,5 +86,12 @@ for p in ${plist[@]}; do
 done
 
 cd {{workdir}}
+
+echo "[i] copying POWHEG-BOX-V2 to {{prefix}}"
+rsync -avp {{srcdir}}/* {{prefix}}/
+if [ "0x$?" != "0x0" ]; then
+	echo "[e] problem with rsync"
+	exit 1
+fi
 
 echo "[i] done"
