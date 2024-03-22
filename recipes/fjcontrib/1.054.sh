@@ -35,7 +35,7 @@ then
 	for c in ${contribs}
 	do
 		cd ${c}
-		echo "[i] in directory ${PWD}"
+		echo "[i] building ${c} in directory ${PWD}"
 		rm *example*.o
 		shlib=${fastjet_prefix}/lib/lib${c}.so
 		# {{CXX}} -fPIC -shared -o ${shlib} *.o -Wl,-rpath,${fastjet_prefix}/lib -L${fastjet_prefix}/lib -lfastjettools -lfastjet
@@ -52,5 +52,16 @@ then
 		fi
 		cd {{srcdir}}
 	done
+fi
+
+if [ $? -eq 0 ]
+then
+	cd {{srcdir}}
+	echo "[i] Building fragile shared library in ${PWD}"
+	./configure --fastjet-config=${fjconfig} --prefix=${fastjet_prefix} CXXFLAGS=-fPIC LDFLAGS="${fjlibs}"
+	if [ $? -eq 0 ]
+	then
+		make -j {{n_cores}} fragile-shared && make fragile-shared-install  # Fragile dynamic library
+	fi
 fi
 exit $?
