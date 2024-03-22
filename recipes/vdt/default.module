@@ -1,0 +1,8 @@
+#%Module
+setenv VDT_DIR {{prefix}}
+setenv VDT_ROOT {{prefix}}
+setenv VDTDIR {{prefix}}
+prepend-path PATH {{prefix}}/bin
+prepend-path DYLD_LIBRARY_PATH {{prefix}}/lib
+prepend-path LD_LIBRARY_PATH {{prefix}}/lib
+prepend-path PYTHONPATH {{prefix}}/lib
