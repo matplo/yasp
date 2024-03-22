@@ -70,7 +70,7 @@ for p in ${plist[@]}; do
 			mkdir -p {{prefix}}/bin
 			cp -v pwhg_main {{prefix}}/bin/pwhg_${p}
 			if [ "0x$?" == "0x0" ]; then
-				echo "[i] $p build"
+				echo "[i] $p build successful"
 			else
 				echo "[e] error building $p"
 				exit 1
