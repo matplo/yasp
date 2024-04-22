@@ -71,6 +71,8 @@ if [ -d ${venvdir} ]; then
 		# echo "module avail" >> ${THISD}/.venvstartup.sh
 		echo "module load yasp" >> ${THISD}/.venvstartup.sh
 		echo "module list" >> ${THISD}/.venvstartup.sh
+		echo "source ${THISD}/src/util/bash/util.sh" >> ${THISD}/.venvstartup.sh
+		echo "source ${THISD}/src/util/bash/bash_completion.sh" >> ${THISD}/.venvstartup.sh
 		# echo "export CLING_STANDARD_PCH=${THISD}/.pch" >> ${THISD}/.venvstartup.sh
 		# echo "mkdir -pv CLING_STANDARD_PCH" >> ${THISD}/.venvstartup.sh
 	fi
