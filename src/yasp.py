@@ -13,6 +13,7 @@ import tempfile
 import tqdm
 import threading
 import multiprocessing
+import copy
 
 
 def get_this_directory():
@@ -21,10 +22,10 @@ def get_this_directory():
 
 
 def find_files(rootdir='.', pattern='*'):
-    return [os.path.join(rootdir, filename)
-            for rootdir, dirnames, filenames in os.walk(rootdir)
-            for filename in filenames
-            if fnmatch.fnmatch(filename, pattern)]
+	return [os.path.join(rootdir, filename)
+			for rootdir, dirnames, filenames in os.walk(rootdir)
+			for filename in filenames
+			if fnmatch.fnmatch(filename, pattern)]
 
 
 # return dictionary where a=value can be more words 23
@@ -158,7 +159,7 @@ def exec_cmnd_thread_pout(cmnd, verbose, shell, poutname):
 				print('[i] result of: ' + str(p.args) + '\n     rc: ' + str(p.returncode),  file=sys.stderr)
 			return p
 	except OSError as e:
-		out = f'[e] failed to execute: f{_args}'
+		out = f'[e] failed to execute: f{cmnd}'
 		if is_subscriptable(e):
 			err = '- Error #{0} : {1}'.format(e[0], e[1])
 		else:
@@ -254,11 +255,11 @@ class Yasp(GenericObject):
 	_current_dir = os.path.realpath(os.getcwd())
 	_defaults = {
 		f'{_prog_name}' : _this_file,
-        'default_config' : _default_config,
+		'default_config' : _default_config,
 		'current_dir' : _current_dir,
-        'recipe_dirs' : [_default_recipe_dir],
+		'recipe_dirs' : [_default_recipe_dir],
 		'prefix' : _default_prefix,
-        'workdir' : _default_workdir,
+		'workdir' : _default_workdir,
 		'download_command' : 'wget --no-check-certificate',
 		'python' : os.path.abspath(os.path.realpath(sys.executable)),
 		'yasp_dir' : _yasp_dir,
@@ -266,7 +267,8 @@ class Yasp(GenericObject):
 		'python_version' : f'{sys.version_info.major}.{sys.version_info.minor}',
 		'python_site_packages_subpath' : f'python{sys.version_info.major}.{sys.version_info.minor}/site-packages',
 		'os' : get_os_name(),
-		'cpu_count' : multiprocessing.cpu_count()
+		'cpu_count' : multiprocessing.cpu_count(),
+		'error' : False
 	}
 
 	def __init__(self, **kwargs):
@@ -305,6 +307,7 @@ class Yasp(GenericObject):
 	def exec_execute(self):
 		if not os.path.exists(self.execute):
 			print(f'[e] file with commands to execute does not exist {self.execute}', file=sys.stderr)
+			self.valid = False
 			return Yasp._break
 		self.get_from_environment()
 		self.output_script_file, self.output_script = tempfile.mkstemp(suffix = '.yasp.tmp')
@@ -358,9 +361,9 @@ class Yasp(GenericObject):
 			_cfg_filename = self.default_config
 			if self.use_config:
 				_cfg_filename = self.use_config
-			with open(_cfg_filename, 'w') as f:
+			with open(_cfg_filename, "w") as f:
 				_ = yaml.dump(_out_dict, f)
-			print('[i] config written to', _cfg_filename, file=sys.stderr)
+			print("[i] config written to", _cfg_filename, file=sys.stderr)
 			return Yasp._break
 
 		return Yasp._continue
@@ -378,13 +381,13 @@ class Yasp(GenericObject):
 		return Yasp._continue
 
 	def get_from_environment(self):
-		_which = { 'CXX': 'g++'}
+		_which = {"CXX": "g++"}
 		for w in _which:
 			_what = _which[w]
-			out, err, rc = self.exec_cmnd(f'which {_what}')
+			out, err, rc = self.exec_cmnd(f"which {_what}")
 			if rc == 0:
 				# print('[i] g++ is', out.decode('utf-8'))
-				self.__setattr__(w, out.decode('utf-8').strip('\n'))
+				self.__setattr__(w, out.decode("utf-8").strip("\n"))
 		if self.n_cpu is None:
 			self.n_cpu = os.cpu_count()
 		if self.n_cores is None:
@@ -402,34 +405,36 @@ class Yasp(GenericObject):
 			for recipe_dir in self.recipe_dirs:
 				recipe_dir = os.path.abspath(recipe_dir)
 				# self.recipe = self.recipe.replace('-', '/')
-				self.recipe = self.recipe.replace('==', '/')
+				self.recipe = self.recipe.replace("==", "/")
 				self.recipe_file = os.path.join(recipe_dir, self.recipe)
 				if os.path.isdir(self.recipe_file):
-					_candidates = find_files(self.recipe_file, '*.sh')
+					_candidates = find_files(self.recipe_file, "*.sh")
 					self.recipe_file = sorted(_candidates, reverse=True)[0]
-					self.recipe = os.path.splitext(self.recipe_file.replace(recipe_dir, '').lstrip('/'))[0]
+					self.recipe = os.path.splitext(self.recipe_file.replace(recipe_dir, "").lstrip("/"))[0]
 				if not os.path.isfile(self.recipe_file):
 					_split = os.path.splitext(self.recipe)
-					if _split[1] != '.sh':
-						self.recipe_file = self.recipe_file + '.sh'
+					if _split[1] != ".sh":
+						self.recipe_file = self.recipe_file + ".sh"
 				if os.path.exists(self.recipe_file):
 					self.recipe_dir = recipe_dir
 					break
 
-
-	def user_confirm(self, what, default_answer, acceptable_answers=['yes', 'no', 'y', 'n']):
-		_answer = '?'
+	def user_confirm(
+		self, what, default_answer, acceptable_answers=["yes", "no", "y", "n"]):
+		_answer = "?"
 		if self.yes:
-			return 'yes'
+			return "yes"
+		if self.no:
+			return "no"
 		acceptable_answers.append(default_answer)
 		while _answer.lower() not in acceptable_answers:
-			_answer = str(input(f'[q] {what} {acceptable_answers} [default={default_answer}]?')).lower().strip()
+			_answer = (str(input(f"[q] {what} {acceptable_answers} [default={default_answer}]?")).lower().strip())
 			if len(_answer) < 1:
 				_answer = default_answer
-		if _answer == 'y':
-			_answer = 'yes'
-		if _answer == 'n':
-			_answer = 'no'
+		if _answer == "y":
+			_answer = "yes"
+		if _answer == "n":
+			_answer = "no"
 		return _answer
 
 	def run(self):
@@ -447,58 +452,103 @@ class Yasp(GenericObject):
 				self.get_from_environment()
 				# handle the script
 				if not os.path.isfile(self.recipe_file):
-					print('[e] recipe file', self.recipe_file, 'does not exist or not a file', file=sys.stderr)
+					print(
+						"[e] recipe file",
+						self.recipe_file,
+						"does not exist or not a file",
+						file=sys.stderr,
+					)
 					self.valid = False
 					continue
 				else:
 					if self.verbose:
-						print('[i] script specified exists:', self.recipe_file, file=sys.stderr)
+						print(
+							"[i] script specified exists:",
+							self.recipe_file,
+							file=sys.stderr,
+						)
 					self.valid = True
 				self.workdir = os.path.join(self.base_workdir, self.recipe)
-				self.builddir = os.path.join(self.workdir, 'build')
-				self.output_script = os.path.join(self.workdir, 'build.sh')
+				self.builddir = os.path.join(self.workdir, "build")
+				self.output_script = os.path.join(self.workdir, "build.sh")
 				if self.same_prefix is False:
 					self.prefix = os.path.join(self.prefix, self.recipe)
 				if self.valid:
-					self.module_recipe = self.recipe_file.replace('.sh', '.module')
-					self.build_script_contents = self.process_replacements(self.recipe_file)
-					self.build_script_contents = self.process_yasp_tags(self.build_script_contents)
-					self.build_script_contents = self.process_replacements(self.recipe_file) # yes has to do it twice
+					self.module_recipe = self.recipe_file.replace(".sh", ".module")
+					self.build_script_contents = self.process_replacements(
+						self.recipe_file
+					)
+					self.build_script_contents = self.process_yasp_tags(
+						self.build_script_contents
+					)
+					self.build_script_contents = self.process_replacements(
+						self.recipe_file
+					)  # yes has to do it twice
 					if os.path.isfile(self.module_recipe):
-						self.module_output_fname = os.path.join(self.base_prefix, 'modules', self.recipe.replace('.sh', ''))
-						self.module_contents = self.process_replacements(self.module_recipe)
-						self.module_contents = self.process_yasp_tags(self.module_contents)
-						self.module_contents = self.process_replacements(self.module_recipe) # yes has to do it twice
+						self.module_output_fname = os.path.join(
+							self.base_prefix, "modules", self.recipe.replace(".sh", "")
+						)
+						self.module_contents = self.process_replacements(
+							self.module_recipe
+						)
+						self.module_contents = self.process_yasp_tags(
+							self.module_contents
+						)
+						self.module_contents = self.process_replacements(
+							self.module_recipe
+						)  # yes has to do it twice
 						self.module_dir = os.path.dirname(self.module_output_fname)
-					self.makedirs()
 					if self.cleanup or self.clean:
 						if self.cleanup:
 							self.do_cleanup()
 						if self.clean:
 							self.do_clean()
 						continue
+					self.makedirs()
 					if self.dry_run or self.query or self.show:
 						if self.dry_run:
 							if self.verbose:
-								print(f'[i] this is dry run - stopping before executing {self.output_script}', file=sys.stderr)
+								print(
+									f"[i] this is dry run - stopping before executing {self.output_script}",
+									file=sys.stderr,
+								)
 								print(self, file=sys.stderr)
 						if self.show:
-							print(f'[i] this is dry run - stopping before executing {self.output_script} - here it is:', file=sys.stderr)
+							print(
+								f"[i] this is dry run - stopping before executing {self.output_script} - here it is:",
+								file=sys.stderr,
+							)
 							for s in self.build_script_contents:
 								print(s.rstrip(), file=sys.stderr)
 							if self.module_contents:
-								print(f'\n[i] this is dry run - module {self.module_output_fname} - is:', file=sys.stderr)
+								print(
+									f"\n[i] this is dry run - module {self.module_output_fname} - is:",
+									file=sys.stderr,
+								)
 								for s in self.module_contents:
 									print(s.rstrip(), file=sys.stderr)
 						continue
 
 					if self.module_only:
 						if self.module_output_fname:
-							self.write_output_file(self.module_output_fname, self.module_contents, executable=False)
+							self.write_output_file(
+								self.module_output_fname,
+								self.module_contents,
+								executable=False,
+							)
 						continue
 
+					if os.path.isdir(self.prefix):
+						if self.user_confirm(f"installation prefix already exists {self.prefix} - continue", "y") == "yes":
+							if self.dry_run:
+								print(f"[i] not removing since dry run is flag is set to: {self.dry_run}")
+						else:
+							continue
+
 					# execute the shell build script
-					self.write_output_file(self.output_script, self.build_script_contents, executable=True)
+					self.write_output_file(
+						self.output_script, self.build_script_contents, executable=True
+					)
 					_p = None
 					_error = False
 					try:
@@ -507,21 +557,27 @@ class Yasp(GenericObject):
 						print(f"{self.output_script} returned {exc.returncode}\n{exc}")
 						_error = True
 					if _p:
-						print(f'[i] {self.output_script} returned {_p.returncode}')
+						print(f"[i] {self.output_script} returned {_p.returncode}")
 
 					if not _error:
 						if self.module and self.module_output_fname:
-							self.write_output_file(self.module_output_fname, self.module_contents, executable=False)
+							self.write_output_file(
+								self.module_output_fname,
+								self.module_contents,
+								executable=False,
+							)
 					else:
 						break
 
 	def rm_dir_with_confirm(self, sdir):
 		if os.path.isdir(sdir):
-			if self.user_confirm(f'remove {sdir}', 'y') == 'yes':
+			if self.user_confirm(f"remove {sdir}", "y") == "yes":
 				if self.dry_run:
-					print(f'[i] not removing since dry run is flag is set to: {self.dry_run}')
+					print(
+						f"[i] not removing since dry run is flag is set to: {self.dry_run}"
+					)
 				else:
-					print(f'[w] removing {sdir}')
+					print(f"[w] removing {sdir}")
 					shutil.rmtree(sdir)
 
 	def do_clean(self):
@@ -547,13 +603,13 @@ class Yasp(GenericObject):
 
 	def get_file_contents(self, fname):
 		_contents = []
-		with open(fname, 'r') as f:
+		with open(fname, "r") as f:
 			_contents = f.readlines()
 		return _contents
 
 	def get_definitions(self, _lines):
 		ret_dict = {}
-		s = ''.join(_lines)
+		s = "".join(_lines)
 		if len(s) < 1:
 			return ret_dict
 		if len(s) < 1:
@@ -563,8 +619,8 @@ class Yasp(GenericObject):
 		for m in matches:
 			_tag = m.group(0)
 			for l in _lines:
-				if l[:len(_tag):] == _tag:
-					ret_dict[_tag] = l[len(_tag):].strip('\n')
+				if l[: len(_tag) :] == _tag:
+					ret_dict[_tag] = l[len(_tag) :].strip("\n")
 		if self.definitions is None:
 			self.definitions = ret_dict
 		else:
@@ -583,20 +639,20 @@ class Yasp(GenericObject):
 
 	def get_replacements(self, _lines):
 		regex = r"{{[a-zA-Z0-9_]+}}*"
-		matches = re.finditer(regex, ''.join(_lines), re.MULTILINE)
+		matches = re.finditer(regex, "".join(_lines), re.MULTILINE)
 		rv_matches = []
 		for m in matches:
 			if m.group(0) not in rv_matches:
-				rv_matches.append(m.group(0).strip('\n'))
+				rv_matches.append(m.group(0).strip("\n"))
 		return rv_matches
 
 	def get_replacements_yasp_dot(self, _lines):
 		regex = r"{{yasp\.[a-zA-Z0-9_]+}}*"
-		matches = re.finditer(regex, ''.join(_lines), re.MULTILINE)
+		matches = re.finditer(regex, "".join(_lines), re.MULTILINE)
 		rv_matches = []
 		for m in matches:
 			if m.group(0) not in rv_matches:
-				rv_matches.append(m.group(0).strip('\n'))
+				rv_matches.append(m.group(0).strip("\n"))
 		return rv_matches
 
 	def replace_in_line(self, l, _definitions, _replacements):
@@ -607,10 +663,10 @@ class Yasp(GenericObject):
 			_tag = r[2:][:-2]
 			if r in newl:
 				try:
-					_repls = _definitions[_tag+'=']
+					_repls = _definitions[_tag + "="]
 				except KeyError:
-					if '.' in _tag:
-						_tag = _tag.split('.')[1]
+					if "." in _tag:
+						_tag = _tag.split(".")[1]
 					_repls = str(self.__getattr__(_tag))
 				if _repls is None:
 					_repls = ""
@@ -622,19 +678,19 @@ class Yasp(GenericObject):
 		_defs_args = self.get_definitions_iter(self.yasp_define)
 		for _k in _defs_args:
 			_val = _defs_args[_k]
-			k = _k.split('=')[0]
+			k = _k.split("=")[0]
 			# print(k.strip('='), '=', _val)
-			if ':' in _val:
-				_type = _val.split(':')[0]
-				_val = _val.split(':')[1]
-				if _type == 'int':
+			if ":" in _val:
+				_type = _val.split(":")[0]
+				_val = _val.split(":")[1]
+				if _type == "int":
 					_val = int(_val)
-				if _type == 'float':
+				if _type == "float":
 					_val = float(_val)
-				if _type == 'str':
+				if _type == "str":
 					_val = str(_val)
 			self.__setattr__(k, _val)
-			print(f'{k} = [{self.__getattr__(k)}]')
+			print(f"{k} = [{self.__getattr__(k)}]")
 
 	def process_replacements(self, input_file):
 		_contents = self.get_file_contents(input_file)
@@ -647,51 +703,55 @@ class Yasp(GenericObject):
 			_defs_args = self.get_definitions_iter(self.define)
 			_definitions.update(_defs_args)
 		if self.verbose:
-			print('[i] definitions:', _definitions)
+			print("[i] definitions:", _definitions)
 		if self.verbose:
-			print('[i] number of replacements found', len(self.replacements))
-			print('   ', self.replacements)
+			print("[i] number of replacements found", len(self.replacements))
+			print("   ", self.replacements)
 		new_contents = []
 		for l in _contents:
 			newl = l
 			replaced = True
 			while replaced:
-				newl, replaced = self.replace_in_line(newl, _definitions, self.replacements)
+				newl, replaced = self.replace_in_line(
+					newl, _definitions, self.replacements
+				)
 			new_contents.append(newl)
 		return new_contents
 
 	def write_output_file(self, outfname, contents, executable=False):
-		with open(outfname, 'w') as f:
+		with open(outfname, "w") as f:
 			f.writelines(contents)
 		# if self.verbose:
-		print('[i] written:', outfname, file=sys.stderr)
+		print("[i] written:", outfname, file=sys.stderr)
 		if executable:
 			os.chmod(outfname, stat.S_IRWXU)
 
 	def exec_cmnd(self, cmnd, shell=False):
 		if self.verbose:
-			print('[i] calling', cmnd, file=sys.stderr)
+			print("[i] calling", cmnd, file=sys.stderr)
 		_args = shlex.split(cmnd)
 		try:
-			p = subprocess.Popen(_args, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			p = subprocess.Popen(
+				_args, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+			)
 			out, err = p.communicate()
 			rc = p.returncode
 		except OSError as e:
-			out = f'[e] failed to execute: f{_args}'
+			out = f"[e] failed to execute: f{_args}"
 			if is_subscriptable(e):
-				err = '- Error #{0} : {1}'.format(e[0], e[1])
+				err = "- Error #{0} : {1}".format(e[0], e[1])
 			else:
-				err = f'- Error {e}'
+				err = f"- Error {e}"
 			rc = 255
 		if self.verbose:
-			print('    out:',out, file=sys.stderr)
-			print('    err:',err, file=sys.stderr)
-			print('     rc:', rc, file=sys.stderr)
+			print("    out:", out, file=sys.stderr)
+			print("    err:", err, file=sys.stderr)
+			print("     rc:", rc, file=sys.stderr)
 		return out, err, rc
 
 	def extract_shell_var(self, s):
-		_var = s.split('=')[0].split()[-1]
-		_shell_expr = s.split('=')[1]
+		_var = s.split("=")[0].split()[-1]
+		_shell_expr = s.split("=")[1]
 		_value = _shell_expr
 		return _var, _value
 
@@ -700,54 +760,64 @@ class Yasp(GenericObject):
 		for l in slines:
 			# stay passive - do not replace anything
 			_rv.append(l)
-			if l.split(' ')[0] == '#yasp':
-				if l.split(' ')[1] == '--shell-var':
-					_rest = ' '.join(l.split(' ')[1:]).strip('\n')
+			if l.split(" ")[0] == "#yasp":
+				if l.split(" ")[1] == "--shell-var":
+					_rest = " ".join(l.split(" ")[1:]).strip("\n")
 					_var, _cmnd = self.extract_shell_var(_rest)
 					if self.verbose:
-						print(f'[i] extracted: "{_cmnd}"',file=sys.stderr)
+						print(f'[i] extracted: "{_cmnd}"', file=sys.stderr)
 					out, err, rc = self.exec_cmnd(_cmnd, shell=True)
 					if err or rc != 0:
-						print(f'[e] extract {_var} using bash var "{_cmnd}" failed', file=sys.stderr)
-						print(f'    error is: {err}', file=sys.stderr)
+						print(
+							f'[e] extract {_var} using bash var "{_cmnd}" failed',
+							file=sys.stderr,
+						)
+						print(f"    error is: {err}", file=sys.stderr)
 					else:
-						_val = out.decode('utf-8').strip('\n')
-						_ns, _replaced = self.replace_in_line([_val], [], self.replacements)
+						_val = out.decode("utf-8").strip("\n")
+						_ns, _replaced = self.replace_in_line(
+							[_val], [], self.replacements
+						)
 						if _replaced:
 							_val = _ns
 						self.__setattr__(_var, _val)
-						_rv.append(f'# yasp var imported: {_var}={_val}')
-				if l.split(' ')[1] == '--exec':
-					_rest = ' '.join(l.split(' ')[1:]).strip('\n')
+						_rv.append(f"# yasp var imported: {_var}={_val}")
+				if l.split(" ")[1] == "--exec":
+					_rest = " ".join(l.split(" ")[1:]).strip("\n")
 					_var, _cmnd = self.extract_shell_var(_rest)
 					if self.verbose:
-						print(f'[i] extracted: "{_cmnd}"',file=sys.stderr)
+						print(f'[i] extracted: "{_cmnd}"', file=sys.stderr)
 					out, err, rc = self.exec_cmnd(_cmnd, shell=False)
 					if err or rc != 0:
-						print(f'[e] extract {_var} using bash var "{_cmnd}" failed', file=sys.stderr)
-						print(f'    error is: {err}', file=sys.stderr)
+						print(
+							f'[e] extract {_var} using bash var "{_cmnd}" failed',
+							file=sys.stderr,
+						)
+						print(f"    error is: {err}", file=sys.stderr)
 					else:
-						_val = out.decode('utf-8').strip('\n')
-						_ns, _replaced = self.replace_in_line([_val], [], self.replacements)
+						_val = out.decode("utf-8").strip("\n")
+						_ns, _replaced = self.replace_in_line(
+							[_val], [], self.replacements
+						)
 						if _replaced:
 							_val = _ns
 						self.__setattr__(_var, _val)
-						_rv.append(f'# yasp var imported: {_var}={_val}')
-				if l.split(' ')[1] == '--set':
-					_rest = ' '.join(l.split(' ')[1:]).strip('\n')
+						_rv.append(f"# yasp var imported: {_var}={_val}")
+				if l.split(" ")[1] == "--set":
+					_rest = " ".join(l.split(" ")[1:]).strip("\n")
 					_var, _val = self.extract_shell_var(_rest)
 					_ns, _replaced = self.replace_in_line([_val], [], self.replacements)
 					if _replaced:
 						_val = _ns
 					if self.verbose:
-						print('extracted:', _val, file=sys.stderr)
+						print("extracted:", _val, file=sys.stderr)
 					self.__setattr__(_var, _val)
 		return _rv
 
 	def test_exec(self):
 		if self.verbose:
-			print('[i] checking bash syntax', self.recipe_file)
-		out, err, rc = self.exec_cmnd('bash -n ' + self.recipe_file)
+			print("[i] checking bash syntax", self.recipe_file)
+		out, err, rc = self.exec_cmnd("bash -n " + self.recipe_file)
 		if rc == 0:
 			return True
 		if rc > 0:
@@ -757,31 +827,33 @@ class Yasp(GenericObject):
 	def exec_download(self):
 		os.chdir(self.workdir)
 		if self.verbose:
-			print('[i] current dir:', os.getcwd(), file=sys.stderr)
+			print("[i] current dir:", os.getcwd(), file=sys.stderr)
 		if self.redownload:
 			if os.path.isfile(self.output):
 				os.remove(self.output)
 		if os.path.isfile(self.output):
 			return 0
-		print(f'[i] downloading {self.download}', file=sys.stderr)
-		_opt = '-O'
-		if 'wget' in self.download_command:
-			_opt = '-O'
-		if 'curl' in self.download_command:
-			_opt = '-o'
-		out, err, rc = self.exec_cmnd('{} {} {} {}'.format(self.download_command, _opt, self.output, self.download))
+		print(f"[i] downloading {self.download}", file=sys.stderr)
+		_opt = "-O"
+		if "wget" in self.download_command:
+			_opt = "-O"
+		if "curl" in self.download_command:
+			_opt = "-o"
+		out, err, rc = self.exec_cmnd(
+			"{} {} {} {}".format(
+				self.download_command, _opt, self.output, self.download
+			)
+		)
 		if rc > 0 or self.verbose:
-			print('[i] returning error={}'.format(rc), file=sys.stderr)
-			print(' download output:', out, file=sys.stderr)
-			print(' download error :', err, file=sys.stderr)
+			print("[i] returning error={}".format(rc), file=sys.stderr)
+			print(" download output:", out, file=sys.stderr)
+			print(" download error :", err, file=sys.stderr)
 		if os.path.isfile(self.output):
-			print('[i] output file:', self.output, file=sys.stderr)
+			print("[i] output file:", self.output, file=sys.stderr)
 		return rc
-
 
 	def find_files(self, fname):
 		return find_files(self.prefix, fname)
-
 
 	def find_dirs_files(self, fname):
 		_dirs = [os.path.dirname(f) for f in find_files(self.prefix, fname)]
@@ -791,8 +863,12 @@ class Yasp(GenericObject):
 				dirs.append(d)
 		return dirs
 
+
 def yasp_feature(what, args={}):
 	sb = Yasp(args=args)
+	if sb.valid is False:
+		return ''
+	print('here', sb.error)
 	if '.' in what:
 		_w = what.split('.')
 		try:
@@ -843,7 +919,7 @@ def add_arguments_to_parser(parser):
 	parser.add_argument('--cleanup', help='clean the main workdir (downloaded and build items)', action='store_true', default=False)
 	parser.add_argument('-i', '-r', '--install', '--recipes', help='name of the recipe to process', type=str, nargs='+')
 	parser.add_argument('-d', '--download', help='download file', type=str)
-	parser.add_argument('--define', help='define replacement', type=str, nargs='+', default='')
+	parser.add_argument('--define', '--opt', help='define replacement', type=str, nargs='+', default='')
 	parser.add_argument('--yasp-define', help='define yasp properties', type=str, nargs='+', default='')
 	parser.add_argument('--clean', help='start from scratch', action='store_true', default=False)
 	parser.add_argument('--redownload', help='redownload even if file already there', action='store_true', default=False)
@@ -860,6 +936,7 @@ def add_arguments_to_parser(parser):
 	parser.add_argument('--download-command', help='overwrite download command - default is wget; could be curl', type=str, default=None)
 	parser.add_argument('-q', '--query', help='query for a feature or files or directory for a file - join with feature <name> files <pattern> or dirs <pattern> (where file located) to match a query - "PseudoJet.hh" for example', type=str, default=None, nargs=2)
 	parser.add_argument('-y', '--yes', help='answer yes to any questions - in particular, on --clean so', action='store_true', default=False)
+	parser.add_argument('--no', help='answer no to any questions - in particular, on --clean so', action='store_true', default=False)
 	parser.add_argument('-m', '--module', help='write module file', action='store_true', default=False)
 	parser.add_argument('--module-only', help='write module file and exit', action='store_true', default=False)
 	parser.add_argument('--use-python', help='specify python executable - default is current {}'.format(sys.executable), default=sys.executable)
@@ -893,6 +970,8 @@ def features(what, *packages):
 	for _pack in packages:
 		sargs = f'-r {_pack} --dry-run'
 		sb = dry_yasp_from_str(sargs)
+		if sb.error:
+			return None
 		try:
 			rv = sb.__getattr__(what)
 		except:
@@ -922,14 +1001,11 @@ def yasp_find_files_dirnames_in_packages(files, *packages):
 					_dirs.append(_d)
 	return _dirs
 
-
-def main():
-	parser = argparse.ArgumentParser()
-	add_arguments_to_parser(parser)
-	args = parser.parse_args()
-
-	sb = Yasp(args=args)
-
+def check_if_same_file(args):
+	_args = copy.deepcopy(args)
+	if _args.install:
+		_args.install = None
+	sb = Yasp(args=_args)
 	if os.path.samefile(os.path.abspath(os.path.realpath(sys.executable)), sb.python) is False:
 		print('[w] looks like yasp called with different python than configured with...', file=sys.stderr)
 		print('    this python is [', sys.executable, 	']', file=sys.stderr)
@@ -942,6 +1018,16 @@ def main():
 			exit(rc)
 		else:
 			exit(1)
+
+def main():
+	parser = argparse.ArgumentParser()
+	add_arguments_to_parser(parser)
+	args = parser.parse_args()
+
+	if not args.query:
+		sb = Yasp(args=args)
+  
+	check_if_same_file(args = args)
 
 	if args.query:
 		q = args.query
