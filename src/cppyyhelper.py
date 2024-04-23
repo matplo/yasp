@@ -43,9 +43,10 @@ class YaspCppyyHelper(yasp.GenericObject):
 			if p not in self.loaded_packages:
 				self.cppyy_add_paths(p)
 				self.loaded_packages.append(p)
+		for fn in headers:
+			print('[i] Including header:', fn, file=sys.stderr)
+			cppyy.include(fn)			
 		for p in libs:
 			if p not in self.loaded_libs:
 				cppyy.load_library(p)
 				self.loaded_libs.append(p)
-		for fn in headers:
-			cppyy.include(fn)			
