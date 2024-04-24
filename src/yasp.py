@@ -868,7 +868,6 @@ def yasp_feature(what, args={}):
 	sb = Yasp(args=args)
 	if sb.valid is False:
 		return ''
-	print('here', sb.error)
 	if '.' in what:
 		_w = what.split('.')
 		try:
@@ -1094,8 +1093,12 @@ def main():
 				# print(m, 'from:', _dname, _fmodpath)
 		else:
 			modules_to_load = [m for m in _modules_list]
+		if not os.path.isdir(os.path.dirname(modfname)):
+			os.makedirs(os.path.dirname(modfname))
 		with open(modfname, 'w') as f:
 			print('#%Module', file=f)
+			dname = os.path.dirname(modfname)
+			print(f'module use {dname}', file=f)
 			for m in modules_to_load:
 				if 'yasp/current' == m:
 					continue

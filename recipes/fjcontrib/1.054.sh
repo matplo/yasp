@@ -26,7 +26,8 @@ fi
 #fi
 fastjet_prefix=$(fastjet-config --prefix)
 fjlibs=$(${fjconfig} --libs --plugins)
-make distclean
+# assume we do not need distclean
+# make distclean
 if [ "x{{make_check}}" == "xNone" ]; then
 	./configure --fastjet-config=${fjconfig} --prefix=${fastjet_prefix} LDFLAGS="${fjlibs}" && make -j {{n_cores}} all && make install  # Static libraries
 else
