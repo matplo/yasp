@@ -1058,10 +1058,10 @@ def main():
 				return 2
 		modfname = os.path.join(sb.base_prefix, 'modules', args.make_module)
 		print('[i] will write to:', modfname)
-		print(f'[i] prefix: {sb.base_prefix}')
-		module_use_path = os.path.join(sb.base_prefix, args.make_module, 'modules')
+		print(f'[i] prefix: {sb.prefix}')
+		module_use_path = os.path.join(sb.prefix, args.make_module, 'modules')
 		if not os.path.isdir(module_use_path):
-			module_use_path = os.path.join(sb.base_prefix, 'modules')
+			module_use_path = os.path.join(sb.prefix, 'modules')
 		print(f'[i] module use path to be added within the module: {module_use_path}')
 		out, err, rc = sb.exec_cmnd(f'{mcmnd} list')
 		if rc == 0:
