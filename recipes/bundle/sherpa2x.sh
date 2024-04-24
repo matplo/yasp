@@ -97,6 +97,6 @@ install_package pythia8/default 	True 			${opts} --prefix=${this_prefix} --opt v
 separator "sherpa" 
 install_package sherpa/2.2.15 		True 			${opts} --prefix=${this_prefix} --opt version=2.2.15 cxx14=true
 [ "0x$?" != "0x0" ] && exit_with_error $?
-yasp --mm sherpa2x
+yasp --mm ${this_prefix}/modules/sherpa2x
 [ "0x$?" != "0x0" ] && exit_with_error $?
 exit 0

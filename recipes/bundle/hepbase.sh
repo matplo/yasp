@@ -95,6 +95,6 @@ install_package pythia8/default 	True 			 ${opts} --prefix=${this_prefix} --opt 
 # separator "sherpa" 
 # install_package sherpa/2.2.15 		True 			 ${opts} --prefix=${this_prefix} --opt version=2.2.15 
 # [ "0x$?" != "0x0" ] && exit_with_error $?
-yasp --mm hepbase
+yasp --mm ${this_prefix}/modules/hepbase
 [ "0x$?" != "0x0" ] && exit_with_error $?
 exit 0
