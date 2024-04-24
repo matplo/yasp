@@ -26,11 +26,17 @@ fi
 #fi
 fastjet_prefix=$(fastjet-config --prefix)
 fjlibs=$(${fjconfig} --libs --plugins)
-./configure --fastjet-config=${fjconfig} --prefix=${fastjet_prefix} LDFLAGS="${fjlibs}" && make -j {{n_cores}} all && make check && make install  # Static libraries
+make distclean
+if [ "x{{make_check}}" == "xNone" ]; then
+	./configure --fastjet-config=${fjconfig} --prefix=${fastjet_prefix} LDFLAGS="${fjlibs}" && make -j {{n_cores}} all && make install  # Static libraries
+else
+	./configure --fastjet-config=${fjconfig} --prefix=${fastjet_prefix} LDFLAGS="${fjlibs}" && make -j {{n_cores}} all && make check && make install  # Static libraries
+fi
 if [ $? -eq 0 ]
 then
-	make distclean
-	./configure --fastjet-config=${fjconfig} --prefix=${fastjet_prefix} CXXFLAGS=-fPIC LDFLAGS="${fjlibs}" && make -j {{n_cores}} all && make check && make install  # Static libraries
+	# it seems the compilation is stable - now build the shared libraries
+	# make distclean
+	# ./configure --fastjet-config=${fjconfig} --prefix=${fastjet_prefix} CXXFLAGS=-fPIC LDFLAGS="${fjlibs}" && make -j {{n_cores}} all && make check && make install  # Static libraries
 	contribs=$(./configure --list)
 	for c in ${contribs}
 	do
