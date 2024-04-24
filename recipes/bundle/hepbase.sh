@@ -98,6 +98,6 @@ install_package pythia8/default 	True 			 ${opts} --workdir=${this_workdir} --pr
 # [ "0x$?" != "0x0" ] && exit_with_error $?
 module_name=$(basename $(dirname ${this_prefix}))/$(basename ${this_prefix})
 note "making a super module: ${module_name}"
-yasp --mm ${module_name}
+yasp --mm ${module_name} --prefix=${this_prefix}
 [ "0x$?" != "0x0" ] && exit_with_error $?
 exit 0
