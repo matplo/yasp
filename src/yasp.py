@@ -1058,6 +1058,11 @@ def main():
 				return 2
 		modfname = os.path.join(sb.base_prefix, 'modules', args.make_module)
 		print('[i] will write to:', modfname)
+		print(f'[i] prefix: {sb.base_prefix}')
+		module_use_path = os.path.join(sb.base_prefix, args.make_module, 'modules')
+		if not os.path.isdir(module_use_path):
+			module_use_path = os.path.join(sb.base_prefix, 'modules')
+		print(f'[i] module use path to be added within the module: {module_use_path}')
 		out, err, rc = sb.exec_cmnd(f'{mcmnd} list')
 		if rc == 0:
 			_sout = (out + err).decode('utf-8')
@@ -1097,8 +1102,7 @@ def main():
 			os.makedirs(os.path.dirname(modfname))
 		with open(modfname, 'w') as f:
 			print('#%Module', file=f)
-			dname = os.path.dirname(modfname)
-			print(f'module use {dname}', file=f)
+			print(f'module use {module_use_path}', file=f)
 			for m in modules_to_load:
 				if 'yasp/current' == m:
 					continue
