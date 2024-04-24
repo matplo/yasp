@@ -100,6 +100,6 @@ install_package sherpa/2.2.15 		True 			${opts} --workdir=${this_workdir} --pref
 [ "0x$?" != "0x0" ] && exit_with_error $?
 module_name=$(basename $(dirname ${this_prefix}))/$(basename ${this_prefix})
 note "making a super module: ${module_name}"
-yasp --mm ${module_name} --prefix=${this_prefix}
+yasp --mm ${module_name} 
 [ "0x$?" != "0x0" ] && exit_with_error $?
 exit 0
