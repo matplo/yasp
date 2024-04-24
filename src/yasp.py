@@ -302,7 +302,7 @@ class Yasp(GenericObject):
 		if self.execute:
 			self.exec_execute()
 			self.no_install = True
-		self.run()
+		self.error = self.run()
 
 	def exec_execute(self):
 		if not os.path.exists(self.execute):
@@ -554,7 +554,7 @@ class Yasp(GenericObject):
 					try:
 						_p = subprocess.run([self.output_script], check=True)
 					except subprocess.CalledProcessError as exc:
-						print(f"{self.output_script} returned {exc.returncode}\n{exc}")
+						print(f"[e] {self.output_script} returned {exc.returncode}\n{exc}")
 						_error = True
 					if _p:
 						print(f"[i] {self.output_script} returned {_p.returncode}")
@@ -567,7 +567,7 @@ class Yasp(GenericObject):
 								executable=False,
 							)
 					else:
-						break
+						return _error
 
 	def rm_dir_with_confirm(self, sdir):
 		if os.path.isdir(sdir):
@@ -1108,6 +1108,8 @@ def main():
 	if args.debug:
 		print(sb)
 
+	if sb.valid is False or sb.error:
+		return 1
 	# sb.run()
 
 
