@@ -66,6 +66,12 @@ if [ "{{cxx14}}" == "true" ]; then
     echo "[i] CXXFLAGS set to $CXXFLAGS"
 fi    
 
+if [ "{{cxx17}}" == "true" ]; then
+    # needed for x-compiling with new root
+    export CXXFLAGS="-std=c++17"
+    echo "[i] CXXFLAGS set to $CXXFLAGS"
+fi    
+
 sqlite_opt="--with-sqlite3=${sqlite_path}/usr"
 
 extra_opt=""
