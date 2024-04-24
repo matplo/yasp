@@ -26,14 +26,27 @@ cmnd=$@
 first_run=""
 if [ ! -d ${venvdir} ]; then
 	echo "[i] creating venv"
+	python_exec=$(which python3)
+	current_python_version=$(python3 -c "import sys; print('.'.join([str(s) for s in sys.version_info[:3]]));")
+	current_python_version_major=$(python3 -c "import sys; print('.'.join([str(s) for s in sys.version_info[:2]]));")
+	if [ ${current_python_version_major} != "3.11" ]; then
+		echo "[w] python version ${current_python_version} is not 3.11 - trying to see if you have 3.11"
+		python_exec=$(which python3.11)
+		if [ "x${python_exec}" == "x" ]; then
+			python_exec=$(which python3)
+			echo "[w] python3.11 not found - trying to continue with ${python_exec}"
+		else
+			echo "[i] found python3.11 at ${python_exec} - continuing with this one."
+		fi
+	fi
 
 	venv_cmnd=""
-	python3 -m virtualenv -h 2>&1 >> /dev/null
+	${python_exec} -m virtualenv -h 2>&1 >> /dev/null
 	if [ "x$?" != "x0" ]; then
 		echo "[w] no virtualenv - trying venv"
-		python3 -m venv -h 2>&1 >> /dev/null
+		${python_exec} -m venv -h 2>&1 >> /dev/null
 		if [ "x$?" != "x0" ]; then
-			echo "[w] python3 -m venv -h returned $?"
+			echo "[w] ${python_exec} -m venv -h returned $?"
 		else
 			venv_cmnd="venv"
 		fi
@@ -46,7 +59,7 @@ if [ ! -d ${venvdir} ]; then
 		exit -1
 	fi
 
-	python3 -m ${venv_cmnd} ${venvdir}
+	${python_exec} -m ${venv_cmnd} ${venvdir}
 	first_run="yes"
 fi
 
