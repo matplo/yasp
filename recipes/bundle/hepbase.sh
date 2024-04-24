@@ -91,6 +91,8 @@ install_package HepMC3/default 	True 			 ${opts} --workdir=${this_workdir} --pre
 [ "0x$?" != "0x0" ] && exit_with_error $?
 separator "pythia8"
 install_package pythia8/default 	True 			 ${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=8311
+separator "roounfold"
+install_package roounfold/default 	True 			 ${opts} --workdir=${this_workdir} --prefix=${this_prefix} 
 [ "0x$?" != "0x0" ] && exit_with_error $?
 # sherpa wont work with fj 3.4.2 and lower version of fj wont work with new root (cxx17)
 # separator "sherpa" 
