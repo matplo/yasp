@@ -17,7 +17,7 @@ cd {{builddir}}
 # #{{srcdir}}/configure --prefix={{prefix}} && make -j {{n_cores}} && make install
 # --with-python-include="$(python -c "from sysconfig import get_paths; info = get_paths(); print(info['include'])")"
 # opts="-Dbuiltin_xrootd=ON -Dmathmore=ON -Dxml=ON -Dvmc=OFF -Dxrootd=OFF"
-opts="-Dbuiltin_xrootd=OFF -Dxrootd=OFF -Dvmc=OFF -Dmathmore=ON -Dxml=ON -Dunfold=ON"
+opts="-Dbuiltin_xrootd=OFF -Dxrootd=OFF -Dvmc=OFF -Dmathmore=ON -Dxml=ON -Dunfold=ON -Dbuiltin_vdt=ON"
 cmake -DCMAKE_INSTALL_PREFIX={{prefix}} \
 	-DCMAKE_BUILD_TYPE=Release \
 	-DPython3_EXECUTABLE=$(which python3) \
