@@ -27,24 +27,36 @@ function exit_with_error()
 
 function install_package()
 {
-	# $1 is the pack name
-	# $2 is has_module
-	# $3 is build options
-	local pack_name=$1
+	# $1 is selection - just check if this is in selected list
+	# $2 is the pack name
+	# $3 is has_module
+	# $4 is build options
+	local selection=$1
+	local pack_name=$2
 	if [ "x${pack_name}" == "x" ]; then
 		[ "0x$?" != "0x0" ] && exit_with_error "pack name not set"
 	fi
-	local has_module=$2
-	shift 2
+	if [ "x${selection}" != "xall" ]; then
+		if [[ "${selection}" =~ "${pack_name}" || "${selection}" =~ "all" ]]; then
+			echo_info "installing ${pack_name}"
+		else
+			echo_info "skipping ${pack_name}"
+			return 0
+		fi
+	fi
+	separator "installing ${pack_name}"
+	local has_module=$3
+	shift 3
 	local options=$@
 	if [ "x${has_module}" == "x" ]; then
 		[ "0x$?" != "0x0" ] && exit_with_error "has module not set"
 	fi
-	echo_info "installing [${pack_name}] with options [${options}] and has_module [${has_module}]"
+	echo_info "-- options [${options}] and has_module [${has_module}]"
 	if [ "x${has_module}" == "xTrue" ]; then
+		module list
 		yasp -mi ${pack_name} ${options}
 		[ "0x$?" != "0x0" ] && exit_with_error "install ${pack_name} failed" $?
-		if [[ "--clean" =~ "${options}" ]]; then
+		if [[ "--clean" =~ "${options}" || "--cleanup" =~ "${options}" ]]; then
 			echo_info "just clean up ${pack_name}"
 		else
 			module load ${pack_name}
@@ -53,6 +65,7 @@ function install_package()
 		return 0
 	fi
 	if [ "x${has_module}" == "xFalse" ]; then
+		module list
 		yasp -i ${pack_name} ${options}
 		[ "0x$?" != "0x0" ] && exit_with_error "install ${pack_name} failed" $?
 		return 0
@@ -66,40 +79,34 @@ dry=""
 clean=""
 default=""
 opts="{{clean}} {{dry}} {{default}}"
+selection="all"
+if [ "x{{select}}" != "xNone" ]; then
+	selection="{{select}}"
+fi
 separator "installing hepbase modules"
-separator "fastjet"
+echo_info "selection is ${selection}"
 echo_error "opts are ${opts}"
-install_package fastjet/3.4.2 		True 			 ${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=3.4.2
-[ "0x$?" != "0x0" ] && exit_with_error $?
-separator "fjcontrib"
-install_package fjcontrib/1.054 	False 		 ${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=1.054  #make_check=True 
-[ "0x$?" != "0x0" ] && exit_with_error $?
-separator "jetflav"
-install_package jetflav/default 	False 										
-[ "0x$?" != "0x0" ] && exit_with_error $?
-separator "hepmc2"
-install_package HepMC2/default 	True 			 ${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=2.06.11
-[ "0x$?" != "0x0" ] && exit_with_error $?
-separator "lhapdf6"
-install_package LHAPDF6/6.5.4 		True 			 ${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=6.5.4
-[ "0x$?" != "0x0" ] && exit_with_error $?
-separator "root"
-install_package root/default 		True 			 ${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=6.30.06
-[ "0x$?" != "0x0" ] && exit_with_error $?
-separator "hepmc3"
-install_package HepMC3/default 	True 			 ${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=3.2.7
-[ "0x$?" != "0x0" ] && exit_with_error $?
-separator "pythia8"
-install_package pythia8/default 	True 			 ${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=8311
-separator "roounfold"
-install_package roounfold/default 	True 			 ${opts} --workdir=${this_workdir} --prefix=${this_prefix} 
-[ "0x$?" != "0x0" ] && exit_with_error $?
+
+install_package ${selection} fastjet/3.4.2 		True 			 ${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=3.4.2
+install_package ${selection} fjcontrib/1.054 	False 		 ${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=1.054  #make_check=True 
+install_package ${selection} jetflav/default 	False 										
+install_package ${selection} HepMC2/default 	True 			 ${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=2.06.11
+install_package ${selection} LHAPDF6/6.5.4 		True 			 ${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=6.5.4
+install_package ${selection} root/default 		True 			 ${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=6.30.06
+install_package ${selection} HepMC3/default 	True 			 ${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=3.2.7
+install_package ${selection} pythia8/default 	True 			 ${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=8311
+install_package ${selection} roounfold/default 	True 			 ${opts} --workdir=${this_workdir} --prefix=${this_prefix} 
+
 # sherpa wont work with fj 3.4.2 and lower version of fj wont work with new root (cxx17)
 # separator "sherpa" 
 # install_package sherpa/2.2.15 		True 			 ${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=2.2.15 
-# [ "0x$?" != "0x0" ] && exit_with_error $?
-module_name=$(basename $(dirname ${this_prefix}))/$(basename ${this_prefix})
-note "making a super module: ${module_name}"
-yasp --mm ${module_name} 
+# 
+if [[ ! -z "{{clean}}" ]]; then
+	echo_info "just clean up - no super module creation"
+else
+	module_name=$(basename $(dirname ${this_prefix}))/$(basename ${this_prefix})
+	note "making a super module: ${module_name}"
+	yasp --mm ${module_name} 
+fi
 [ "0x$?" != "0x0" ] && exit_with_error $?
 exit 0
