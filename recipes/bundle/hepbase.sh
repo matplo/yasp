@@ -94,7 +94,7 @@ install_package ${selection} HepMC2/default 	True 			 	${opts} --workdir=${this_
 install_package ${selection} LHAPDF6/6.5.4 		True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=6.5.4
 install_package ${selection} root/default 		True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=6.30.06
 install_package ${selection} HepMC3/default 	True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=3.2.7
-install_package ${selection} pythia8/default 	True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=8311
+install_package ${selection} pythia8/8310		 	True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=8310
 install_package ${selection} roounfold/default 	True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} 
 install_package ${selection} starlight/default 	True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} 
 

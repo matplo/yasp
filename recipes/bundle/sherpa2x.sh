@@ -95,7 +95,7 @@ install_package ${selection} HepMC2/default 	True 			${opts} --workdir=${this_wo
 install_package ${selection} LHAPDF6/6.5.4 		True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=6.5.4
 install_package ${selection} root/6.26.10 		True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=6.26.10
 install_package ${selection} HepMC3/default 	True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=3.2.7
-install_package ${selection} pythia8/default 	True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=8311
+install_package ${selection} pythia8/8310		 	True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=8310
 install_package ${selection} sherpa/2.2.15 		True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=2.2.15 cxx14=true
 
 if [[ ! -z "{{clean}}" ]]; then
