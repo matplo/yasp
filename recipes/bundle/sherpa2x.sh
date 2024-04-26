@@ -2,7 +2,6 @@
 
 # path: recipes/bundle/sherpa2x.sh
 
-
 version="default"
 this_prefix="{{prefix}}"
 this_workdir="{{workdir}}"
@@ -89,15 +88,15 @@ echo_info "selection is ${selection}"
 echo_error "opts are ${opts}"
 
 # sherpa2x wont work with fj 3.4.2 - use of depreciated code
-install_package fastjet/3.4.1 		True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=3.4.1
-install_package fjcontrib/1.054 	False 		${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=1.054  #make_check=True 
-install_package jetflav/default 	False 										
-install_package HepMC2/default 	True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=2.06.11
-install_package LHAPDF6/6.5.4 		True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=6.5.4
-install_package root/6.26.10 		True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=6.26.10
-install_package HepMC3/default 	True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=3.2.7
-install_package pythia8/default 	True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=8311
-install_package sherpa/2.2.15 		True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=2.2.15 cxx14=true
+install_package ${selection} fastjet/3.4.1 		True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=3.4.1
+install_package ${selection} fjcontrib/1.054 	False 		${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=1.054  #make_check=True 
+install_package ${selection} jetflav/default 	False 										
+install_package ${selection} HepMC2/default 	True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=2.06.11
+install_package ${selection} LHAPDF6/6.5.4 		True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=6.5.4
+install_package ${selection} root/6.26.10 		True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=6.26.10
+install_package ${selection} HepMC3/default 	True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=3.2.7
+install_package ${selection} pythia8/default 	True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=8311
+install_package ${selection} sherpa/2.2.15 		True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=2.2.15 cxx14=true
 
 if [[ ! -z "{{clean}}" ]]; then
 	echo_info "just clean up - no super module creation"
