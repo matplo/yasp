@@ -17,8 +17,8 @@ git clone ${RUGITREPO}
 srcdir={{workdir}}/RooUnfold
 build_dir={{workdir}}/build
 if [ "{{version}}" != "master" ]; then
-    cd ${srcdir}
-    git checkout {{version}}
+    cd {{srcdir}}
+    git checkout tags/{{roounfold_version}} -b {{roounfold_version}}-dev
 fi
 cd {{build_dir}}
 cmake {{srcdir}} -DCMAKE_INSTALL_PREFIX={{prefix}} -DCMAKE_BUILD_TYPE=Release
