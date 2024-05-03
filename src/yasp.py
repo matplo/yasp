@@ -57,81 +57,97 @@ def is_subscriptable(o):
 
 
 class GenericObject(object):
-    max_chars = 1000
+	max_chars = 1000
 
-    def __init__(self, **kwargs):
-        for key, value in kwargs.items():
-            self.__setattr__(key, value)
-        if self.args:
-            self.configure_from_dict(self.args.__dict__)
-        if self.init_dict:
-            self.configure_from_dict(self.init_dict)
-        if self.init_json:
-            self.configure_from_json(self.init_json)
-        if self.init_yaml:
-            self.configure_from_yaml(self.init_yaml)
+	def __init__(self, **kwargs):
+		for key, value in kwargs.items():
+			self.__setattr__(key, value)
+		if self.init_ignore_none is None:
+			self.init_ignore_none = True
+		if self.args:
+			self.configure_from_dict(self.args.__dict__, self.init_ignore_none)
+		if self.init_dict:
+			self.configure_from_dict(self.init_dict, self.init_ignore_none)
+		if self.init_json:
+			self.configure_from_json(self.init_json, self.init_ignore_none)
+		if self.init_yaml:
+			self.configure_from_yaml(self.init_yaml, self.init_ignore_none)
 
-    def configure_from_args(self, **kwargs):
-        for key, value in kwargs.items():
-            self.__setattr__(key, value)
+	def configure_from_args(self, **kwargs):
+		for key, value in kwargs.items():
+			if self.ignore_none and value is None:
+				continue
+			self.__setattr__(key, value)
 
-    def configure_from_dict(self, d, ignore_none=False):
-        for k in d:
-            if ignore_none and d[k] is None:
-                continue
-            self.__setattr__(k, d[k])
+	def configure_from_dict(self, d, ignore_none=None):
+		if ignore_none is None:
+			ignore_none = self.init_ignore_none
+		for k in d:
+			if ignore_none and d[k] is None:
+				continue
+			self.__setattr__(k, d[k])
 
-    def configure_from_json(self, js, ignore_none=False):
-        d = json.loads(js)
-        for k in d:
-            if ignore_none and d[k] is None:
-                continue
-            self.__setattr__(k, d[k])
+	def configure_from_json(self, js, ignore_none=None):
+		if ignore_none is None:
+			ignore_none = self.init_ignore_none
+		d = json.loads(js)
+		for k in d:
+			if ignore_none and d[k] is None:
+				continue
+			self.__setattr__(k, d[k])
 
-    def configure_from_yaml(self, yml, ignore_none=False):
-        d = None
-        if type(yml) is str:
-            yml = yml.encode("utf-8")
-            if os.path.exists(yml):
-                with open(yml, 'r') as _f:
-                    yml = _f.read()
-        d = yaml.safe_load(yml)
-        if not isinstance(d, dict):
-            raise ValueError("Invalid YAML input")
-        for k in d:
-            if ignore_none and d[k] is None:
-                continue
-            self.__setattr__(k, d[k])
+	def configure_from_yaml(self, yml, ignore_none=None):
+		if ignore_none is None:
+			ignore_none = self.init_ignore_none
+		d = None
+		if type(yml) is str:
+			yml = yml.encode("utf-8")
+			if os.path.exists(yml):
+				with open(yml, 'r') as _f:
+					yml = _f.read()
+		try:
+			d = yaml.safe_load(yml)
+		except yaml.YAMLError as e:
+			print(f'[e] yaml error: {e}')
+		except yaml.constructor.ConstructorError as e:
+			print(f'[e] yaml constructor error: {e}')
+		if not isinstance(d, dict):
+			raise ValueError(f"Invalid YAML input - got {type(d)} but expected a list.", d)
+			return
+		for k in d:
+			if ignore_none and d[k] is None:
+				continue
+			self.__setattr__(k, d[k])
 
-    def __getattr__(self, key):
-        try:
-            return self.__dict__[key]
-        except KeyError:
-            pass
-        self.__setattr__(key, None)
-        return self.__getattr__(key)
+	def __getattr__(self, key):
+		try:
+			return self.__dict__[key]
+		except KeyError:
+			pass
+		self.__setattr__(key, None)
+		return self.__getattr__(key)
 
-    def __str__(self) -> str:
-        s = []
-        s.append('[i] {} ({})'.format(str(self.__class__).split('.')[1].split('\'')[0], id(self)))
-        for a in self.__dict__:
-            if a[0] == '_':
-                continue
-            sval = str(getattr(self, a))
-            if len(sval) > self.max_chars:
-                sval = sval[:self.max_chars - 4] + '...'
-            s.append('   {} = {}'.format(str(a), sval))
-        return '\n'.join(s)
+	def __str__(self) -> str:
+		s = []
+		s.append('[i] {} ({})'.format(str(self.__class__).split('.')[1].split('\'')[0], id(self)))
+		for a in self.__dict__:
+			if a[0] == '_':
+				continue
+			sval = str(getattr(self, a))
+			if len(sval) > self.max_chars:
+				sval = sval[:self.max_chars - 4] + '...'
+			s.append('   {} = {}'.format(str(a), sval))
+		return '\n'.join(s)
 
-    def __repr__(self) -> str:
-        return self.__str__()
+	def __repr__(self) -> str:
+		return self.__str__()
 
-    def __getitem__(self, key):
-        return self.__getattr__(key)
+	def __getitem__(self, key):
+		return self.__getattr__(key)
 
-    def __iter__(self):
-        _props = [a for a in self.__dict__ if a[0] != '_']
-        return iter(_props)
+	def __iter__(self):
+		_props = [a for a in self.__dict__ if a[0] != '_']
+		return iter(_props)
 
 
 class ConfigData(GenericObject):

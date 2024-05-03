@@ -18,6 +18,8 @@ class YaspCppyyHelper(yasp.GenericObject):
 		if self.paths_lib is None:
 			self.paths_lib = []
 		for pfix in yasp.features('prefix', *packages):
+			if pfix is None:
+				continue
 			_include_path = os.path.join(pfix, 'include')
 			_lib_path = os.path.join(pfix, 'lib')
 			_lib64_path = os.path.join(pfix, 'lib64')
