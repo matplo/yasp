@@ -1135,7 +1135,12 @@ def add_module_paths(module_name):
 
 
 def enable_module(module_name):
-  return add_module_paths(module_name)
+  add_module_paths(module_name)
+
+
+def enable_modules(*args):
+	for module_name in args:
+		add_module_paths(module_name)
 
 
 def main():
