@@ -24,3 +24,19 @@ do
 	mkdir -pv {{python_dest_path}}/yasp/${pack}
 	ln -sv {{yasp.yasp_src_dir}}/${pack}.py {{python_dest_path}}/yasp/${pack}/__init__.py
 done
+
+if [[ -z "${VIRTUAL_ENV}" ]]; then
+	echo "[i] Not running within a virtual environment"
+else
+	echo "[i] Running within a virtual environment at ${VIRTUAL_ENV}"
+	python_dest_path=${VIRTUAL_ENV}/lib/{{python_site_packages_subpath}}
+	# deal with yasp.py
+	mkdir -pv ${python_dest_path}/yasp
+	ln -sv {{yasp.yasp_src_dir}}/yasp.py ${python_dest_path}/yasp/__init__.py
+
+	for pack in yasprepl cppyyhelper yaspreplstring
+	do
+		mkdir -pv ${python_dest_path}/yasp/${pack}
+		ln -sv {{yasp.yasp_src_dir}}/${pack}.py ${python_dest_path}/yasp/${pack}/__init__.py
+	done
+fi

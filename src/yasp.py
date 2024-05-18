@@ -29,6 +29,13 @@ def find_files(rootdir='.', pattern='*'):
 			if fnmatch.fnmatch(filename, pattern)]
 
 
+def find_dirs(rootdir='.', pattern='*'):
+    return [os.path.join(rootdir, dirname)
+            for rootdir, dirnames, _ in os.walk(rootdir)
+            for dirname in dirnames
+            if fnmatch.fnmatch(dirname, pattern)]
+
+
 # return dictionary where a=value can be more words 23
 def get_eq_val(s):
 	ret_dict = {}
@@ -1065,6 +1072,71 @@ def check_if_same_file(args):
 			exit(rc)
 		else:
 			exit(1)
+
+
+def check_if_file_is_module_file(fname):
+	if not os.path.isfile(fname):
+		return False
+	with open(fname, 'r') as f:
+		for line in f:
+			if '#%Module' in line:
+				return True
+	return False
+
+
+def add_module_paths(module_name):
+	# get from yasp where are the modules
+	prefix = yasp_feature('prefix')
+	# find all dirs endig with modules
+	candidate_dirs = find_dirs(rootdir=prefix, pattern='modules')
+	candidate_modules = []
+	for candidate_dir in candidate_dirs:
+		# find all modules in this dir
+		found_files = find_files(rootdir=candidate_dir, pattern='*')
+		for module in found_files:
+			if '/' in module_name:
+				if module.endswith(module_name) and check_if_file_is_module_file(module):
+					candidate_modules.append(module)
+			else:
+				if os.path.dirname(module).endswith(module_name) and check_if_file_is_module_file(module):
+					candidate_modules.append(module)
+	print('-i- found candidate modules:', candidate_modules)
+	# check which one has the latest modification date
+	# and return the path to it
+	latest_module = None
+	latest_modification = 0
+	for cm in candidate_modules:
+		_m = os.path.getmtime(cm)
+		if _m > latest_modification:
+			latest_modification = _m
+			latest_module = cm
+	if latest_module is None:
+		print('-w- no module found')
+		return
+	print('-i- latest module:', latest_module)
+	# read the file and find DYLD_LIBRARY_PATH or LD_LIBRARY_PATH
+	# and add it to the system path
+	paths_to_add = []
+	with open(latest_module, 'r') as f:
+		for line in f:
+			if 'DYLD_LIBRARY_PATH' in line or 'LD_LIBRARY_PATH' in line:
+				path = line.split()[-1].strip()
+				paths_to_add.append(path)
+  # get unique paths
+	paths_to_add = list(set(paths_to_add))
+	for path in paths_to_add:
+		if path not in sys.path:
+			print('-i- adding path:', path)
+			sys.path.append(path)
+		else:
+			print('-w- path already in sys.path:', path)
+	if len(paths_to_add) == 0:
+		print('-w- no paths to add')
+
+
+def enable_module(module_name):
+  return add_module_paths(module_name)
+
 
 def main():
 	parser = argparse.ArgumentParser()
