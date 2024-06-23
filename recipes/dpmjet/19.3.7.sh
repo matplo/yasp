@@ -18,11 +18,11 @@ fi
 export FC
 $FC --version
 
-cd {{builddir}}
-# {{srcdir}}/configure --prefix={{prefix}} ${cgal_opt} ${other_opts} && make -j {{n_cores}} && make install
+# build in source
+# cd {{builddir}}
 echo {{srcdir}}
 cd {{srcdir}}
-make -j {{n_cores}} all
+make -j {{n_cores}} exe
 
 bresult=$?
 if [ $bresult -eq 0 ]; then
