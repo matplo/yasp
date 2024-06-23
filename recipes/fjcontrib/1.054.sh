@@ -12,8 +12,14 @@ if [ "{{rebuild}}" == "yes" ]; then
 		echo_warning "rebuilding"
 		rm -rf STARlight
 	else
-		if [ -e {{prefix}}/lib/libfastjetcontribfragile.so ]; then
-			echo_warning "{{prefix}}/lib/libfastjetcontribfragile.so exists - skipping - --define rebuild=yes to force rebuild"
+		# get so lib extention depending on the os
+		if [ "Darwin" == $(uname) ]; then
+			soext=dylib
+		else
+			soext=so
+		fi
+		if [ -e "{{prefix}}/lib/libfastjetcontribfragile.${soext}" ]; then
+			echo_warning "{{prefix}}/lib/libfastjetcontribfragile.${soext} exists - skipping - --define rebuild=yes to force rebuild"
 			exit 0
 		fi
 fi
