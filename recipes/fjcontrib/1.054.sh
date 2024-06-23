@@ -2,27 +2,27 @@
 
 source ${YASP_DIR}/src/util/bash/util.sh
 
-cd {{workdir}}
-version=1.054
-url=https://fastjet.hepforge.org/contrib/downloads/fjcontrib-{{version}}.tar.gz
-local_file={{workdir}}/fjcontrib-{{version}}.tar.gz
-{{yasp}} --download {{url}} --output {{local_file}}
-
 if [ "{{rebuild}}" == "yes" ]; then
-		echo_warning "rebuilding"
-		rm -rf STARlight
+		echo_warning "rebuilding..."
 	else
+		fastjet_prefix=$(fastjet-config --prefix)
 		# get so lib extention depending on the os
 		if [ "Darwin" == $(uname) ]; then
 			soext=dylib
 		else
 			soext=so
 		fi
-		if [ -e "{{prefix}}/lib/libfastjetcontribfragile.${soext}" ]; then
-			echo_warning "{{prefix}}/lib/libfastjetcontribfragile.${soext} exists - skipping - --define rebuild=yes to force rebuild"
+		if [ -e "${fastjet_prefix}/lib/libfastjetcontribfragile.${soext}" ]; then
+			echo_warning "${fastjet_prefix}/lib/libfastjetcontribfragile.${soext} exists - skipping - --define rebuild=yes to force rebuild"
 			exit 0
 		fi
 fi
+
+cd {{workdir}}
+version=1.054
+url=https://fastjet.hepforge.org/contrib/downloads/fjcontrib-{{version}}.tar.gz
+local_file={{workdir}}/fjcontrib-{{version}}.tar.gz
+{{yasp}} --download {{url}} --output {{local_file}}
 
 if [ "Darwin" == $(uname) ]; then
 	tar zxvf {{local_file}}
