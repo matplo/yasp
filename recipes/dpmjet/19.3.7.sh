@@ -7,6 +7,16 @@ local_file={{workdir}}/dpmjet-{{version}}.tar.gz
 {{yasp}} --download {{url}} --output {{local_file}}
 tar zxvf {{local_file}}
 srcdir={{workdir}}/dpmjet-{{version}}
+if [ ! -d $srcdir ]; then
+	srcdir={{workdir}}/DPMJET-{{version}}
+fi
+
+if [ -d $srcdir ]; then
+	echo "DPMJET source directory exists"
+else
+	echo "DPMJET source directory does not exist"
+	exit 1
+fi
 
 if ! command -v f77 &> /dev/null; then
     echo "f77 not found, using gfortran instead."
