@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source ${YASP_DIR}/src/util/bash/util.sh
+
 cd {{workdir}}
 version=1.054
 url=https://fastjet.hepforge.org/contrib/downloads/fjcontrib-{{version}}.tar.gz
@@ -26,6 +28,17 @@ fi
 #fi
 fastjet_prefix=$(fastjet-config --prefix)
 fjlibs=$(${fjconfig} --libs --plugins)
+
+if [ {{rebuild}} == "yes" ]; then
+	echo_warning "rebuilding"
+	rm -rf STARlight
+	else
+		if [ -e {{prefix}}/lib/libfastjetcontribfragile.so ]; then
+			echo_warning "{{prefix}}/lib/libfastjetcontribfragile.so exists - skipping - --define rebuild=yes to force rebuild"
+			exit 0
+		fi
+fi
+
 # assume we do not need distclean
 make distclean
 if [ "x{{make_check}}" == "xNone" ]; then
