@@ -8,9 +8,9 @@ url=https://fastjet.hepforge.org/contrib/downloads/fjcontrib-{{version}}.tar.gz
 local_file={{workdir}}/fjcontrib-{{version}}.tar.gz
 {{yasp}} --download {{url}} --output {{local_file}}
 
-if [ {{rebuild}} == "yes" ]; then
-	echo_warning "rebuilding"
-	rm -rf STARlight
+if [ "{{rebuild}}" == "yes" ]; then
+		echo_warning "rebuilding"
+		rm -rf STARlight
 	else
 		if [ -e {{prefix}}/lib/libfastjetcontribfragile.so ]; then
 			echo_warning "{{prefix}}/lib/libfastjetcontribfragile.so exists - skipping - --define rebuild=yes to force rebuild"
