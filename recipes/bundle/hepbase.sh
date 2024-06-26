@@ -97,7 +97,7 @@ install_package ${selection} HepMC3/default 	True 			 	${opts} --workdir=${this_
 install_package ${selection} pythia8/8310		 	True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=8310
 install_package ${selection} roounfold/default 	True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} 
 install_package ${selection} dpmjet/19.3.7 			True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=19.3.7
-install_package ${selection} starlight/default 	True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} 
+install_package ${selection} starlight/default 	True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt clean_build=yes
 
 # sherpa wont work with fj 3.4.2 and lower version of fj wont work with new root (cxx17)
 # separator "sherpa" 
