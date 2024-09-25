@@ -114,6 +114,7 @@ def add_to_pythonpath(command):
   if _yaspenv_sh_exec is None:
     print("[e] yaspenv.sh not found")
     return None, None
+  print('[i] Using yaspenv.sh at', _yaspenv_sh_exec)
   added_paths, removed_paths = get_pythonpath_change(f'{_yaspenv_sh_exec} {tmp_file_1}', f'{_yaspenv_sh_exec} {tmp_file_2}')
   # manipulate sys.path to add the new paths
   for path in added_paths:
