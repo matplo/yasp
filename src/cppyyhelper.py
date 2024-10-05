@@ -55,9 +55,11 @@ class YaspCppyyHelper(yasp.GenericObject):
 
 	def get(self, symbol = '', verbose=False):
 		try:
-			if verbose:
-				print('[i] returning symbol ' + symbol)
-			return getattr(cppyy.gbl, symbol)
+			x = getattr(cppyy.gbl, symbol)
+			if x is not None:
+				if verbose:
+					print('[i] returning symbol ' + symbol, x)
+				return x
 		except AttributeError:
 			if verbose:
 				print('[e] symbol ' + symbol + ' not found')
