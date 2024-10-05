@@ -52,3 +52,13 @@ class YaspCppyyHelper(yasp.GenericObject):
 			if p not in self.loaded_libs:
 				cppyy.load_library(p)
 				self.loaded_libs.append(p)
+
+	def get(self, symbol = '', verbose=False):
+		try:
+			if verbose:
+				print('[i] returning symbol ' + symbol)
+			return getattr(cppyy.gbl, symbol)
+		except AttributeError:
+			if verbose:
+				print('[e] symbol ' + symbol + ' not found')
+		return None
