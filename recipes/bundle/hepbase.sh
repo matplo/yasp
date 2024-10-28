@@ -92,8 +92,8 @@ install_package ${selection} fjcontrib/1.054 	False 		 	${opts} --workdir=${this
 install_package ${selection} jetflav/default 	False 										
 install_package ${selection} HepMC2/default 	True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=2.06.11
 install_package ${selection} LHAPDF6/6.5.4 		True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=6.5.4
-install_package ${selection} root/default 		True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=6.30.06
-install_package ${selection} HepMC3/default 	True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=3.2.7
+install_package ${selection} root/default 		True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=6.32.06
+install_package ${selection} HepMC3/default 	True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=3.3.0
 install_package ${selection} pythia8/8310		 	True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=8310
 install_package ${selection} roounfold/default 	True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} 
 install_package ${selection} dpmjet/19.3.7 			True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=19.3.7
