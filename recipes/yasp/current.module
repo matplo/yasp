@@ -7,6 +7,8 @@ setenv YASP_EXEC {{yasp}}
 prepend-path PATH {{prefix}}/bin
 # prepend-path PYTHONPATH {{prefix}}/lib
 prepend-path PYTHONPATH {{prefix}}/lib/{{python_site_packages_subpath}}
+prepend-path LD_LIBRARY_PATH {{python_libdir}}
+prepend-path DYLD_LIBRARY_PATH {{python_libdir}}
 
 set-alias yasp_python {{python}}
 set-alias yasp_cd "cd {{yasp_dir}}"

@@ -62,6 +62,31 @@ def is_subscriptable(o):
     return False
   return True
 
+def get_python_lib_dir():
+    """
+    Get the Python library directory using sysconfig or distutils as a fallback.
+    """
+    try:
+        # Try to get the library directory using sysconfig
+        import sysconfig
+        lib_dir = sysconfig.get_config_var("LIBDIR")
+        if lib_dir:
+            return lib_dir
+    except ImportError:
+        pass
+
+    try:
+        # Fallback to distutils if sysconfig is not available or fails
+        from distutils.sysconfig import get_config_var
+        lib_dir = get_config_var("LIBDIR")
+        if lib_dir:
+            return lib_dir
+    except ImportError:
+        pass
+
+    # Final fallback: return the directory of the Python executable
+    return os.path.dirname(sys.executable)
+
 
 import subprocess
 import sys
@@ -397,6 +422,7 @@ class Yasp(GenericObject):
     'python_version' : f'{sys.version_info.major}.{sys.version_info.minor}',
     'python_version_no_dot' : f'{sys.version_info.major}{sys.version_info.minor}',
     'python_site_packages_subpath' : f'python{sys.version_info.major}.{sys.version_info.minor}/site-packages',
+    'python_libdir' : get_python_lib_dir(),
     'os' : get_os_name(),
     'cpu_count' : multiprocessing.cpu_count(),
     'error' : False
