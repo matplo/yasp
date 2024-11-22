@@ -395,6 +395,7 @@ class Yasp(GenericObject):
     'yasp_dir' : _yasp_dir,
     'yasp_src_dir' : _yasp_src_dir,
     'python_version' : f'{sys.version_info.major}.{sys.version_info.minor}',
+    'python_version_no_dot' : f'{sys.version_info.major}{sys.version_info.minor}',
     'python_site_packages_subpath' : f'python{sys.version_info.major}.{sys.version_info.minor}/site-packages',
     'os' : get_os_name(),
     'cpu_count' : multiprocessing.cpu_count(),
