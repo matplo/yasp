@@ -104,6 +104,14 @@ install_package ${selection} starlight/default 	True 			${opts} --workdir=${this
 # separator "sherpa" 
 # install_package sherpa/2.2.15 		True 			 ${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=2.2.15 
 # 
+# this also seems not to work
+# install_package ${selection} sherpa/2.2.15 		True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=2.2.15 cxx17=true
+# but a sequential installation works
+# yasp -mi sherpa/2.2.15 --opt version=2.2.15 cxx14=true
+# yasp -mi sherpa/2.2.15 --opt version=2.2.15 cxx17=true
+# the 14 is working with fastjet...
+# then the 17 is working with root
+
 if [[ ! -z "{{clean}}" ]]; then
 	echo_info "just clean up - no super module creation"
 else
