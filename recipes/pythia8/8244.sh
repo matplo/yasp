@@ -16,6 +16,12 @@ else
 	LHAPDF6OPT=""
 fi
 
+if [ -d "${HEPMC2_DIR}" ]; then
+    HEPMC2OPT="--with-hepmc2=${HEPMC2_DIR} --with-hepmc2-version=${HEPMC2_VERSION}"
+else
+    HEPMC2OPT=""
+fi
+
 if [ -d "${FASTJET_DIR}" ]; then
 	FASTJET3OPT=--with-fastjet3=${FASTJET_DIR}
 else
@@ -28,6 +34,6 @@ else
 	ROOTOPT=""
 fi
 
-{{srcdir}}/configure --prefix={{prefix}} ${LHAPDF6OPT} ${ROOTOPT} ${FASTJET3OPT} && make -j {{n_cores}} && make install
+{{srcdir}}/configure --prefix={{prefix}} ${LHAPDF6OPT} ${ROOTOPT} ${FASTJET3OPT} ${HEPMC2OPT} && make -j {{n_cores}} && make install
 # --with-python-include="$(python -c "from sysconfig import get_paths; info = get_paths(); print(info['include'])")"
 exit $?

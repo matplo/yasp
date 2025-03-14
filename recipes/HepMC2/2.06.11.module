@@ -1,6 +1,7 @@
 #%Module
 setenv HEPMC2_DIR {{prefix}}
 setenv HEPMC2DIR {{prefix}}
+setenv HEPMC2_VERSION 2.06.11
 prepend-path PATH {{prefix}}/bin
 prepend-path DYLD_LIBRARY_PATH {{prefix}}/lib
 prepend-path LD_LIBRARY_PATH {{prefix}}/lib
