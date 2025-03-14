@@ -1,7 +1,8 @@
 #!/bin/bash
 
 cd {{workdir}}
-version=3.1.8
+#version=4.1.0
+version=3.1.11
 url=https://gitlab.com/hepcedar/rivetbootstrap/raw/{{version}}/rivet-bootstrap
 local_file={{workdir}}/rivet-bootstrap
 {{yasp}} --download {{url}} --output {{local_file}}
@@ -19,6 +20,30 @@ export CMAKE="cmake"
 if [ "{{dev}}" != "None" ]; then
 	echo "[i] setting INSTALL_RIVETDEV to 1"
 	export INSTALL_RIVETDEV=1
+fi
+
+# Check for existing yasp builds to skip in the rivet build
+if [ -d "${LHAPDF6_DIR}" ]; then
+    export INSTALL_LHAPDF=0
+    export LHAPDF_VERSION=${LHAPDF6_VERSION}
+    export LHAPDFPATH=${LHAPDF6_DIR}
+fi
+
+if [ -d "${HEPMC2_DIR}" ]; then
+    export INSTALL_HEPMC=0
+    export HEPMC_VERSION=${HEPMC2_VERSION}
+    export HEPMCPATH=${HEPMC2_DIR}
+fi
+
+if [ -d "${FASTJET_DIR}" ]; then
+    export INSTALL_FASTJET=0
+    #export FASTJET_VERSION=${FASTJET_VERSION}
+    export FASTJETPATH=${FASTJET_DIR}
+
+    if [ "${FJCONTRIB_VERSION}" ]; then
+        export INSTALL_FJCONTRIB=0
+        #export FJCONTRIB_VERSION=${FJCONTRIB_VERSION}
+    fi
 fi
 
 if [ "{{nobootstrap}}" != "None" ]; then

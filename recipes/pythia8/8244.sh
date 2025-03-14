@@ -1,8 +1,8 @@
 #!/bin/bash
 
 cd {{workdir}}
-version=8310
-url=https://pythia.org/download/pythia83/pythia{{version}}.tgz
+version=8244
+url=https://pythia.org/download/pythia82/pythia{{version}}.tgz
 local_file={{workdir}}/pythia{{version}}.tar.gz
 {{yasp}} --download {{url}} --output {{local_file}}
 tar zxvf {{local_file}}
@@ -17,7 +17,7 @@ else
 fi
 
 if [ -d "${HEPMC2_DIR}" ]; then
-    HEPMC2OPT=--with-hepmc2=${HEPMC2_DIR}
+    HEPMC2OPT="--with-hepmc2=${HEPMC2_DIR} --with-hepmc2-version=${HEPMC2_VERSION}"
 else
     HEPMC2OPT=""
 fi

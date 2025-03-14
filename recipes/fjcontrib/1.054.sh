@@ -59,7 +59,8 @@ if [ $? -eq 0 ]
 then
 	# it seems the compilation is stable - now build the shared libraries
 	make distclean
-	./configure --fastjet-config=${fjconfig} --prefix=${fastjet_prefix} CXXFLAGS=-fPIC LDFLAGS="${fjlibs}" && make -j {{n_cores}} all && make check && make install  # Static libraries
+	./configure --fastjet-config=${fjconfig} --prefix=${fastjet_prefix} CXXFLAGS=-fPIC LDFLAGS="${fjlibs}"
+	make -j {{n_cores}} all && make check && make install  # Static libraries
 	contribs=$(./configure --list)
 	for c in ${contribs}
 	do
@@ -81,16 +82,11 @@ then
 		fi
 		cd {{srcdir}}
 	done
+
+    # Modify the fastjet module to include fjcontrib version
+    fjmodule="{{yasp_dir}}/software/modules/fastjet/${FASTJET_VERSION}"
+    echo "[i] Saving fjcontrib version to ${fjmodule}"
+    echo "setenv FJCONTRIB_VERSION ${version}" >> ${fjmodule}
 fi
 
-if [ $? -eq 0 ]
-then
-	cd {{srcdir}}
-	echo "[i] Building fragile shared library in ${PWD}"
-	./configure --fastjet-config=${fjconfig} --prefix=${fastjet_prefix} CXXFLAGS=-fPIC LDFLAGS="${fjlibs}"
-	if [ $? -eq 0 ]
-	then
-		make -j {{n_cores}} fragile-shared && make fragile-shared-install  # Fragile dynamic library
-	fi
-fi
 exit $?

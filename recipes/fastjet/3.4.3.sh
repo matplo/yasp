@@ -1,8 +1,7 @@
 #!/bin/bash
 
 cd {{workdir}}
-#version=3.3.3
-version=3.4.1
+version=3.4.3
 url=http://fastjet.fr/repo/fastjet-{{version}}.tar.gz
 local_file={{workdir}}/fastjet-{{version}}.tar.gz
 {{yasp}} --download {{url}} --output {{local_file}}

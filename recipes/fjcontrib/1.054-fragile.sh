@@ -1,18 +1,14 @@
 #!/bin/bash
 
 cd {{workdir}}
-version=1.053
+version=1.054
 url=https://fastjet.hepforge.org/contrib/downloads/fjcontrib-{{version}}.tar.gz
 local_file={{workdir}}/fjcontrib-{{version}}.tar.gz
 {{yasp}} --download {{url}} --output {{local_file}}
-if [ "Darwin" == $(uname) ]; then
-	tar zxvf {{local_file}}
-else
-	tar zxvf {{local_file}} --warning=no-unknown-keyword
-fi
+# tar zxvf {{local_file}} --warning=no-unknown-keyword
+tar zxvf {{local_file}} 
 srcdir={{workdir}}/fjcontrib-{{version}}
 cd {{srcdir}}
-rm .[!.]* */.[!.]*  # Remove unnecessary dotfiles
 fjconfig=$(which fastjet-config)
 if [ ! -e "${fjconfig}" ]; then
 	echo "[e] no fastjet-config [${fjconfig} ] this will not work"
@@ -25,14 +21,14 @@ fi
 #	   fastjet_prefix=$({{yasp}} -q feature prefix -i fastjet)
 #fi
 fastjet_prefix=$(fastjet-config --prefix)
-# this produces only static libs
 fjlibs=$(${fjconfig} --libs --plugins)
-./configure --fastjet-config=${fjconfig} --prefix=${fastjet_prefix} LDFLAGS="${fjlibs}" && make -j {{n_cores}} all && make check && make install
-# add a cmake for dynamic libs!
+./configure --fastjet-config=${fjconfig} --prefix=${fastjet_prefix} LDFLAGS="${fjlibs}"
+make -j {{n_cores}} fragile-shared && make fragile-shared-install  # Fragile dynamic library
 if [ $? -eq 0 ]
 then
-	make clean
-	./configure --fastjet-config=${fjconfig} --prefix=${fastjet_prefix} CXXFLAGS=-fPIC LDFLAGS="${fjlibs}" && make -j {{n_cores}} all && make check && make install
+	make distclean
+	./configure --fastjet-config=${fjconfig} --prefix=${fastjet_prefix} CXXFLAGS=-fPIC LDFLAGS="${fjlibs}"
+	make -j {{n_cores}} fragile-shared && make fragile-shared-install  # Fragile dynamic library
 	contribs=$(./configure --list)
 	for c in ${contribs}
 	do
