@@ -1,40 +1,10 @@
 #!/bin/bash
 
-source ${YASP_DIR}/src/util/bash/util.sh
-
-fjconfig=$(which fastjet-config)
-if [ ! -e "${fjconfig}" ]; then
-	echo_error "no fastjet-config [${fjconfig} ] this will not work"
-	exit -1
-else
-	echo_info "using ${fjconfig}"
-fi
-fastjet_prefix=$(fastjet-config --prefix)
-echo_info "fastjet prefix: ${fastjet_prefix}"
-fjlibs=$(${fjconfig} --libs --plugins)
-echo_info "fastjet libs: ${fjlibs}"
-# get so lib extention depending on the os
-if [ "Darwin" == $(uname) ]; then
-	soext=dylib
-else
-	soext=so
-fi
-
-if [ "{{rebuild}}" == "yes" ]; then
-		echo_warning "rebuilding..."
-	else
-		if [ -e "${fastjet_prefix}/lib/libfastjetcontribfragile.${soext}" ]; then
-			echo_warning "${fastjet_prefix}/lib/libfastjetcontribfragile.${soext} exists - skipping - --define rebuild=yes to force rebuild"
-			exit 0
-		fi
-fi
-
 cd {{workdir}}
-version=1.054
+version=1.101
 url=https://fastjet.hepforge.org/contrib/downloads/fjcontrib-{{version}}.tar.gz
 local_file={{workdir}}/fjcontrib-{{version}}.tar.gz
 {{yasp}} --download {{url}} --output {{local_file}}
-
 if [ "Darwin" == $(uname) ]; then
 	tar zxvf {{local_file}}
 else
@@ -43,11 +13,19 @@ fi
 srcdir={{workdir}}/fjcontrib-{{version}}
 cd {{srcdir}}
 rm .[!.]* */.[!.]*  # Remove unnecessary dotfiles
+fjconfig=$(which fastjet-config)
+if [ ! -e "${fjconfig}" ]; then
+	echo "[e] no fastjet-config [${fjconfig} ] this will not work"
+	exit -1
+else
+	echo "[i] using ${fjconfig}"
+fi
 # the line below would use the default fj picked by yasp - not always what wanted...
 #if [ -z "${fastjet_prefix}" ]; then
 #	   fastjet_prefix=$({{yasp}} -q feature prefix -i fastjet)
 #fi
-
+fastjet_prefix=$(fastjet-config --prefix)
+fjlibs=$(${fjconfig} --libs --plugins)
 # assume we do not need distclean
 make distclean
 if [ "x{{make_check}}" == "xNone" ]; then
