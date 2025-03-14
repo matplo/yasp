@@ -6,6 +6,7 @@ setenv PYTHIA8_SYS {{prefix}}
 setenv PYTHIA8DIR {{prefix}}
 setenv PYTHIA8ROOT {{prefix}}
 setenv PYTHIA8SYS {{prefix}}
+setenv PYTHIA8DATA {{prefix}}/share/Pythia8/xmldoc
 prepend-path PATH {{prefix}}/bin
 prepend-path DYLD_LIBRARY_PATH {{prefix}}/lib
 prepend-path LD_LIBRARY_PATH {{prefix}}/lib
