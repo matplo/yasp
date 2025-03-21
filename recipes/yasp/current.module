@@ -13,3 +13,7 @@ prepend-path DYLD_LIBRARY_PATH {{python_libdir}}
 set-alias yasp_python {{python}}
 set-alias yasp_cd "cd {{yasp_dir}}"
 set-alias yaspenv "{{yasp_dir}}/yaspenv.sh"
+
+# Saves Python header files on the path for compilation
+prepend-path C_INCLUDE_PATH {{python_includedir}}
+prepend-path CPLUS_INCLUDE_PATH {{python_includedir}}
