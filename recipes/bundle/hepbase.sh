@@ -87,8 +87,8 @@ separator "installing hepbase modules"
 echo_info "selection is ${selection}"
 echo_error "opts are ${opts}"
 
-install_package ${selection} fastjet/3.4.2 		True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=3.4.2
-install_package ${selection} fjcontrib/1.054 	False 		 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=1.054  #make_check=True 
+install_package ${selection} fastjet/3.4.2 		True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=3.4.3
+install_package ${selection} fjcontrib/1.054 	False 		 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=1.101  #make_check=True 
 install_package ${selection} jetflav/default 	False 										
 install_package ${selection} HepMC2/default 	True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=2.06.11
 install_package ${selection} LHAPDF6/6.5.4 		True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=6.5.5
