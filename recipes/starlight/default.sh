@@ -54,7 +54,8 @@ else
 fi
 
 cd {{build_dir}}
-cmake {{srcdir}} -DCMAKE_INSTALL_PREFIX={{prefix}} -DCMAKE_BUILD_TYPE=Release ${HEPMC3_OPT} ${DPMJET_OPT}
+cmake {{srcdir}} -DCMAKE_INSTALL_PREFIX={{prefix}} -DCMAKE_BUILD_TYPE=Release ${HEPMC3_OPT} ${DPMJET_OPT} 
+# -DCMAKE_CXX_FLAGS="-Wno-error" -DCMAKE_CXX_COMPILER=g++
 [ "0x$?" != "0x0" ] && exit_with_error "cmake failed" $?
 cmake --build . --target install -- -j {{n_cores}}
 
