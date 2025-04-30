@@ -25,3 +25,11 @@ cmake -DCMAKE_INSTALL_PREFIX={{prefix}} \
 	{{srcdir}} && cmake --build . --target install -- -j {{n_cores}}
 exit $?
 
+# note to myself in the future:
+# for cmake above 3.5, the following options are needed:
+# 	-DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+# these will still not work...
+# 	-Dbuiltin_davix=OFF -Ddavix=OFF \
+# 	-Dbuiltin_tbb=OFF -Dtbb=OFF \
+# 	-Dbuiltin_vdt=OFF -Dvdt=OFF \
+# so compile with the cmake 3.31.7 made with yasp (recipe provided)
