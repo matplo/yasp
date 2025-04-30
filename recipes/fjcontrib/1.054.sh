@@ -85,6 +85,8 @@ then
 
     # Modify the fastjet module to include fjcontrib version
     fjmodule="{{yasp_dir}}/software/modules/fastjet/${FASTJET_VERSION}"
+		# this is more generic - path independent...
+		fjmodule=$(module show fastjet -t | grep modules/fastjet | cut -d':' -f1)
     echo "[i] Saving fjcontrib version to ${fjmodule}"
     echo "setenv FJCONTRIB_VERSION ${version}" >> ${fjmodule}
 fi
