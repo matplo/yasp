@@ -22,6 +22,9 @@ if [ "{{dev}}" != "None" ]; then
 	export INSTALL_RIVETDEV=1
 fi
 
+# Turn on or off the rivet python environment
+export USE_VENV=0
+
 # Check for existing yasp builds to skip in the rivet build
 if [ -d "${LHAPDF6_DIR}" ]; then
     export INSTALL_LHAPDF=0
