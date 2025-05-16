@@ -141,6 +141,20 @@ class YaspSingletonData(GenericObject):
 				print(f'[w] unable to add {spath} to cppyy include path')
 
 
+def in_jupyter_notebook():
+    try:
+        from IPython import get_ipython
+        shell = get_ipython().__class__.__name__
+        if shell == 'ZMQInteractiveShell':
+            return True   # Jupyter notebook or qtconsole
+        elif shell == 'TerminalInteractiveShell':
+            return False  # Terminal running IPython
+        else:
+            return False  # Other type (?)
+    except Exception:
+        return False      # Probably standard Python interpreter
+      
+      
 def get_this_directory():
 	_this_file = os.path.dirname(os.path.realpath(os.path.abspath(__file__)))
 	return _this_file

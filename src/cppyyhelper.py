@@ -28,15 +28,18 @@ class YaspCppyyHelper(yasp.GenericObject):
 	_instance = None
 	def __new__(cls):
 		if cls._instance is None:
-			print('[i] Creating YaspCppyyHelper singleton.', file=sys.stderr)
+			if yasp.debug:
+				print('[yasp-i] Creating YaspCppyyHelper singleton.', file=sys.stderr)
 			cls._instance = super(YaspCppyyHelper, cls).__new__(cls)
 			cls._instance.jupyter = is_running_in_jupyter()
-			print('[w] Running in Jupyter:', cls._instance.jupyter, file=sys.stderr)
+			if cls._instance.jupyter:
+				print('[yasp-i] Running in Jupyter:', cls._instance.jupyter, file=sys.stderr)
 		return cls._instance
 
 
 	def reload_yasp_cppyy_paths(self):
-		print('[i] Reloading YaspCppyyHelper paths', file=sys.stderr)
+		if yasp.debug:
+			print('[yasp-i] Reloading YaspCppyyHelper paths', file=sys.stderr)
 		_data = yasp.YaspSingletonData()
 		if self.paths_include is None:
 			self.paths_include = []
@@ -104,7 +107,8 @@ class YaspCppyyHelper(yasp.GenericObject):
 					print(f"Error running ldd on {lib_path}: {e}", file=sys.stderr)
 
 	def load_dependencies(self, slib_path):
-			print('[i] Loading dependencies for:', slib_path)
+			if yasp.debug:
+				print('[yasp-i] Loading dependencies for:', slib_path)
 			try:
 					if os.path.isfile(slib_path) is False:
 						lib_path = os.path.basename(slib_path)
@@ -123,9 +127,10 @@ class YaspCppyyHelper(yasp.GenericObject):
 										dep_path = parts[0].strip()
 									try:
 											cppyy.load_library(dep_path)
-											print(f"[i] Loaded dependency: {dep_path}")
+											if yasp.debug:
+												print(f"[yasp-i] Loaded dependency: {dep_path}")
 									except Exception as e:
-											print(f"[i] Failed to load dependency: {dep_path}, error: {e}", file=sys.stderr)
+											print(f"[yasp-error] Failed to load dependency: {dep_path}, error: {e}", file=sys.stderr)
 			except subprocess.CalledProcessError as e:
 					print(f"Error running ldd on {lib_path}: {e}", file=sys.stderr)
             
@@ -140,7 +145,8 @@ class YaspCppyyHelper(yasp.GenericObject):
 				self.cppyy_add_paths(p)
 				self.loaded_packages.append(p)
 		for fn in headers:
-			print('[i] Including header:', fn, file=sys.stderr)
+			if yasp.debug:
+				print('[yasp-i] Including header:', fn, file=sys.stderr)
 			cppyy.include(fn)			
 		for p in libs:
 			if p not in self.loaded_libs:
@@ -150,29 +156,30 @@ class YaspCppyyHelper(yasp.GenericObject):
 					self.loaded_libs.append(p)
 					loaded = True
 				except Exception as e:
-					print('[e] Failed to load library:', p, e, file=sys.stderr)
+					print('[yasp-error] Failed to load library:', p, e, file=sys.stderr)
 				if loaded is False:
 					# try to find the library in the system path
 					_candidate = self.find_lib_candidate_in_sys_path(p)
 					if _candidate is not None:
-						print('[i] Trying to load library:', _candidate, 'instead of', p, file=sys.stderr)
+						if yasp.debug:
+							print('[yasp-i] Trying to load library:', _candidate, 'instead of', p, file=sys.stderr)
 						if self.jupyter:
 							self.load_dependencies(_candidate)
 						#_load_ret = cppyy.gbl.gSystem.Load(_candidate)
-						# print('[i] Load return:', _load_ret, file=sys.stderr)
+						# print('[yasp-i] Load return:', _load_ret, file=sys.stderr)
 						cppyy.load_library(_candidate)
 						self.loaded_libs.append(p)
 					else:
-						print('[e] No candidate found for:', p, file=sys.stderr)
+						print('[yasp-warn] No candidate found for:', p, file=sys.stderr)
 
 	def get(self, symbol = '', verbose=False):
 		try:
 			x = getattr(cppyy.gbl, symbol)
 			if x is not None:
-				if verbose:
-					print('[i] returning symbol ' + symbol, x)
+				if verbose or yasp.debug:
+					print('[yasp-i] returning symbol ' + symbol, x)
 				return x
 		except AttributeError:
-			if verbose:
-				print('[e] symbol ' + symbol + ' not found')
+			if verbose or yasp.debug:
+				print('[yasp-warn] symbol ' + symbol + ' not found')
 		return None
