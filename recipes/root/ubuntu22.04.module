@@ -1,0 +1,9 @@
+#%Module
+setenv ROOTSYS {{prefix}}
+setenv ROOT_DIR {{prefix}}
+setenv CLING_STANDARD_PCH none
+prepend-path PATH {{prefix}}/bin
+prepend-path DYLD_LIBRARY_PATH {{prefix}}/lib
+prepend-path LD_LIBRARY_PATH {{prefix}}/lib
+prepend-path PYTHONPATH {{prefix}}/lib
+prepend-path CPATH {{prefix}}/include

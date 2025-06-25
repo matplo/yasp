@@ -78,7 +78,7 @@ function install_package()
 dry=""
 clean=""
 default=""
-opts="{{clean}} {{dry}} {{default}}"
+opts="{{clean}} {{dry}} {{default}} --yasp-define n_cores={{n_cores}}"
 selection="all"
 if [ "x{{select}}" != "xNone" ]; then
 	selection="{{select}}"
@@ -86,6 +86,8 @@ fi
 separator "installing hepbase modules"
 echo_info "selection is ${selection}"
 note "opts are ${opts}"
+
+rootspec=default
 
 # check what the current version of cmake is
 cmake_version=$(cmake --version | grep version | awk '{print $3}')
@@ -111,14 +113,13 @@ install_package ${selection} fjcontrib/mp 	False 		 	${opts} --workdir=${this_wo
 #install_package ${selection} jetflav/default 	False 										
 install_package ${selection} HepMC2/default 	True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=2.06.11
 install_package ${selection} LHAPDF6/6.5.4 		True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=6.5.5
-install_package ${selection} root/default 		True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=6.36.00 n_cores=30
+install_package ${selection} root/{{rootspec}} 		True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=6.36.00
 install_package ${selection} HepMC3/default 	True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=3.3.1
 install_package ${selection} pythia8/default		 	True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=8315
 install_package ${selection} roounfold/default 	True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=3.0.5
 # install_package ${selection} roounfold/default 	True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=2.1
 install_package ${selection} dpmjet/19.3.7 			True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=19.3.7
 install_package ${selection} starlight/default 	True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt clean_build=yes
-
 # sherpa wont work with fj 3.4.2 and lower version of fj wont work with new root (cxx17)
 # separator "sherpa" 
 # install_package sherpa/2.2.15 		True 			 ${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=2.2.15 
