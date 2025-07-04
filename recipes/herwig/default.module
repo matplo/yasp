@@ -4,5 +4,6 @@ prepend-path PATH {{prefix}}/bin
 prepend-path DYLD_LIBRARY_PATH {{prefix}}/lib
 prepend-path LD_LIBRARY_PATH {{prefix}}/lib
 prepend-path PYTHONPATH {{prefix}}/lib
+prepend-path CPATH {{prefix}}/include
 set-alias herwig_activate "source {{prefix}}/bin/activate"
 # set-alias herwig_deactivate "source {{prefix}}/bin/deactivate"
