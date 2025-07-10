@@ -134,10 +134,17 @@ while [[ $# -gt 0 ]]; do
                 exit 1
             fi
             ;;
+        --first-run)
+            first_run="yes"
+            echo_info "First run flag set. Will perform initial setup."
+            shift 1 # remove the --first-run from the arguments
+            ;;
         --help|-h)
             echo "Usage: $0 [OPTIONS]"
             echo "Options:"
             echo "  --python VERSION    Specify Python version (e.g., 3.11)"
+            echo "  --name NAME         Specify conda environment name modifier (default: conda_env_yasp)"
+            echo "  --first-run         Force initial setup (install dependencies, clone yasp repo)"
             echo "  --help, -h          Show this help message"
             exit 0
             ;;
@@ -147,6 +154,8 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+cmnd="$@"
 
 echo_info "Python selected: ${python_selected}"
 
@@ -178,8 +187,6 @@ if [ -e "$HOME/.bash_profile" ]; then
     echo "source $HOME/.bash_profile" >> ${tmpfile}
 fi
 
-# first_run="forced"
-
 echo "conda activate ${conda_env_prefix}" >> ${tmpfile}
 echo "[[ $? -ne 0 ]] && echo_error \"Failed to activate conda environment ${conda_env_prefix}. Please check if the environment exists and is valid.\" exit $?" >> ${tmpfile}
 
@@ -191,6 +198,10 @@ if [[ -n "${first_run}" ]]; then
     # Clone the yasp repository and install it in
     echo "git clone git@github.com:matplo/yasp.git" >> ${tmpfile}
     echo "${conda_env_prefix}/yasp/src/yasp.py -i yasp -m" >> ${tmpfile}
+    # since we are cloning the yasp repo within conda env lets make sure we take the recipes from this one - no - don't do this its confusing...
+    # echo "module use ${conda_env_prefix}/yasp/software/modules" >> ${tmpfile}
+    # echo "module load yasp" >> ${tmpfile}
+    # echo "yasp --recipe-dir ${YASP_DIR}/recipes" >> ${tmpfile}
     echo "separator \"done with first run\"" >> ${tmpfile}
     # echo "cd -" >> ${tmpfile}
 else
@@ -201,10 +212,11 @@ venv_startup_file="${conda_env_prefix}/.venvstartup.sh"
 if [ ! -e "${venv_startup_file}" ]; then
     echo_info "Creating ${venv_startup_file} file"
     internal_yasp_dir=${conda_env_prefix}/yasp/software/modules
-    echo module use ${internal_yasp_dir} > ${venv_startup_file}
+    echo "module use ${internal_yasp_dir}" > ${venv_startup_file}
     echo "module load yasp" >> ${venv_startup_file}
     echo "source ${conda_env_prefix}/yasp/src/util/bash/util.sh" >> ${venv_startup_file}
     echo "source ${conda_env_prefix}/yasp/src/util/bash/bash_completion.sh" >> ${venv_startup_file}
+    echo "alias conda_env_cd=\"cd ${conda_env_prefix}\"" >> ${venv_startup_file}
     separator "conda:${conda_env_prefix}"
 fi
 
@@ -221,7 +233,7 @@ else
     ${tmpfile}
 fi
 
-separator "Done."
+separator "conda:${conda_env_prefix} done."
 exit 0
 
 # Check if the conda environment was activated successfully
