@@ -194,9 +194,10 @@ if [[ -n "${first_run}" ]]; then
     echo_warning "This is the first run of the conda environment setup..."
     echo "separator \"this is first run...\"" >> ${tmpfile}
     echo "conda install -y numpy pyyaml tqdm find-libpython" >> ${tmpfile}
-    # echo "cd ${conda_env_prefix}" >> ${tmpfile}
+    echo "cd ${conda_env_prefix}" >> ${tmpfile}
     # Clone the yasp repository and install it in
     echo "git clone git@github.com:matplo/yasp.git" >> ${tmpfile}
+    echo "cd -" >> ${tmpfile}
     echo "${conda_env_prefix}/yasp/src/yasp.py -i yasp -m" >> ${tmpfile}
     # since we are cloning the yasp repo within conda env lets make sure we take the recipes from this one - no - don't do this its confusing...
     # echo "module use ${conda_env_prefix}/yasp/software/modules" >> ${tmpfile}
