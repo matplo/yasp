@@ -21,6 +21,13 @@ export YASP_DIR=${THISD}
 source ${THISD}/src/util/bash/util.sh
 separator "This is yasp conda env at ${YASP_DIR}"
 
+# exit if we are already within a conda environment
+if [[ -n "${CONDA_PREFIX}" ]]; then
+    echo_error "You are already in a conda environment: ${CONDA_PREFIX}"
+    echo_error "Please deactivate it first before running this script."
+    exit 1
+fi
+
 # check if conda is available
 if ! command -v conda &> /dev/null; then
     # try module load conda
