@@ -1,5 +1,19 @@
 #!/bin/bash
 
+interactive=
+while getopts "i" opt; do
+  	case $opt in
+		i)
+			interactive="yes"
+			;;
+		\?)
+			echo "Invalid option: -$OPTARG" >&2
+			exit 1
+			;;
+	esac
+done
+shift $(( OPTIND-1 ))
+
 savedir=${PWD}
 
 function thisdir()
@@ -97,8 +111,13 @@ if [ -d ${venvdir} ]; then
 		echo "[i] exec ${tmpfile}" >&2
 		echo "${cmnd}" >> ${tmpfile}
 		chmod +x ${tmpfile}
-		${tmpfile}
+		if [ -n "$interactive" ]; then
+			/bin/bash --init-file ${tmpfile} -i
+		else
+			${tmpfile}
+		fi
 	fi
+	ecode=$?
 	#-s < .activate
 fi
 
@@ -120,3 +139,4 @@ fi
 #fi
 
 cd ${savedir}
+exit $ecode
