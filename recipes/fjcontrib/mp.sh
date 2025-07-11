@@ -21,6 +21,25 @@ install_prefix="{{fastjet_prefix}}"
 echo_warning "forcing prefix: ${install_prefix}"
 echo_warning "typically the prefix is the same as fastjet-config --prefix"
 
+#determine lib extension
+if [[ "$(uname)" == "Darwin" ]]; then
+	libext="dylib"
+else
+	libext="so"
+fi
+fragile_lib_path=${install_prefix}/lib/libfastjetcontribfragile.${libext}
+if [ -e "${fragile_lib_path}" ]; then
+	echo_warning "fragile lib already exists: ${fragile_lib_path}"
+	# ask if to continue
+	read -p "Continue recompiling? [Y/n] " answer
+	if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
+		echo_info "Continuing..."
+	else
+		echo_error "Done here due to existing fragile lib"
+		exit 0
+	fi
+fi
+
 cd {{workdir}}
 version=master
 url=https://github.com/matplo/fjcontrib.git
@@ -79,5 +98,16 @@ cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
 			-DBUILD_TESTING=${BUILD_TESTING} \
 			${cgal_opt} ${other_opts} \
 			${srcdir} && cmake --build . --target install -- -j {{n_cores}}
+if [ "0x$?" != "0x0" ]; then
+	echo_error "cmake build failed with exit code $?"
+	exit 1
+fi
+
+if [ -e "${fragile_lib_path}" ]; then
+	echo_info "fragile lib created: ${fragile_lib_path}"
+else
+	echo_error "fragile lib not created: ${fragile_lib_path}"
+	exit 1
+fi
 
 exit $?
