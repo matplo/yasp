@@ -24,31 +24,31 @@ fastjet_prefix=$(fastjet-config --prefix)
 fjlibs=$(${fjconfig} --libs --plugins)
 ./configure --fastjet-config=${fjconfig} --prefix=${fastjet_prefix} LDFLAGS="${fjlibs}"
 make -j {{n_cores}} fragile-shared && make fragile-shared-install  # Fragile dynamic library
-if [ $? -eq 0 ]
-then
-	make distclean
-	./configure --fastjet-config=${fjconfig} --prefix=${fastjet_prefix} CXXFLAGS=-fPIC LDFLAGS="${fjlibs}"
-	make -j {{n_cores}} fragile-shared && make fragile-shared-install  # Fragile dynamic library
-	contribs=$(./configure --list)
-	for c in ${contribs}
-	do
-		cd ${c}
-		echo "[i] in directory ${PWD}"
-		rm *example*.o
-		shlib=${fastjet_prefix}/lib/lib${c}.so
-		# {{CXX}} -fPIC -shared -o ${shlib} *.o -Wl,-rpath,${fastjet_prefix}/lib -L${fastjet_prefix}/lib -lfastjettools -lfastjet
-		ofiles=$(ls *.o)
-		if [ -z "${ofiles}" ]; then
-			echo "[i] Skipping so build for ${c} - no object files"
-		else
-			{{CXX}} -fPIC -shared -o ${shlib} *.o ${fjlibs}
-		fi
-		if [ -f ${shlib} ]; then
-			echo "[i] shared lib created ${shlib}"
-		else
-			echo "[i] shared lib NOT created ${shlib}"
-		fi
-		cd {{srcdir}}
-	done
-fi
+# if [ $? -eq 0 ]
+# then
+# 	make distclean
+# 	./configure --fastjet-config=${fjconfig} --prefix=${fastjet_prefix} CXXFLAGS=-fPIC LDFLAGS="${fjlibs}"
+# 	make -j {{n_cores}} fragile-shared && make fragile-shared-install  # Fragile dynamic library
+# 	contribs=$(./configure --list)
+# 	for c in ${contribs}
+# 	do
+# 		cd ${c}
+# 		echo "[i] in directory ${PWD}"
+# 		rm *example*.o
+# 		shlib=${fastjet_prefix}/lib/lib${c}.so
+# 		# {{CXX}} -fPIC -shared -o ${shlib} *.o -Wl,-rpath,${fastjet_prefix}/lib -L${fastjet_prefix}/lib -lfastjettools -lfastjet
+# 		ofiles=$(ls *.o)
+# 		if [ -z "${ofiles}" ]; then
+# 			echo "[i] Skipping so build for ${c} - no object files"
+# 		else
+# 			{{CXX}} -fPIC -shared -o ${shlib} *.o ${fjlibs}
+# 		fi
+# 		if [ -f ${shlib} ]; then
+# 			echo "[i] shared lib created ${shlib}"
+# 		else
+# 			echo "[i] shared lib NOT created ${shlib}"
+# 		fi
+# 		cd {{srcdir}}
+# 	done
+# fi
 exit $?
