@@ -165,8 +165,8 @@ create_env_cmd="conda create --prefix ${conda_env_prefix} python=${python_select
 if [[ -d "$conda_env_prefix" ]] && conda env list | grep -q "$conda_env_prefix"; then
     echo_info "✓ conda environment at ${conda_env_prefix} exists"
 else
-    echo_error "✗ conda environment ${conda_env_prefix} does not exist"
-    echo_info "Creating conda environment with command: ${create_env_cmd}"
+    echo_warning "✗ conda environment ${conda_env_prefix} does not exist"
+    echo_info "Creating conda environment with command: ${create_env_cmd}..."
     if ! ${create_env_cmd}; then
         echo_error "Failed to create conda environment. Please check the error messages above."
         exit 1
