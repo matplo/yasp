@@ -27,17 +27,29 @@ if [[ "$(uname)" == "Darwin" ]]; then
 else
 	libext="so"
 fi
+
 fragile_lib_path=${install_prefix}/lib/libfastjetcontribfragile.${libext}
 if [ -e "${fragile_lib_path}" ]; then
-	echo_warning "fragile lib already exists: ${fragile_lib_path}"
-	# ask if to continue
-	read -p "Continue recompiling? [Y/n] " answer
-	if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
-		echo_info "Continuing..."
-	else
-		echo_error "Done here due to existing fragile lib"
-		exit 0
-	fi
+    echo_warning "fragile lib already exists: ${fragile_lib_path}"
+    # ask if to continue
+    read -p "Continue recompiling? [Y/n] " answer
+    if [[ "$answer" == "n" || "$answer" == "N" ]]; then
+	echo_error "Done here due to existing fragile lib - but returning rc=0"
+	exit 0
+    else
+	echo_info "Continuing..."
+    fi
+fi
+
+if [ -d "${install_prefix}/include/fastjet/contrib" ]; then
+    echo_warning "Will remove ${install_prefix}/include/fastjet/contrib - is this ok?"
+    read -p "Continue recompiling? [Y/n] " answer
+    if [[ "$answer" == "n" || "$answer" == "N" ]]; then
+	echo_error "Done here but returning rc=0"
+	exit 0
+    else
+	rm -rf ${install_prefix}/include/fastjet/contrib
+    fi
 fi
 
 cd {{workdir}}
@@ -50,16 +62,15 @@ echo "fjcontrib-version is:" fjcontrib-{{version}}
 cd {{workdir}} && rm -rf fjcontrib-{{version}}
 git clone ${url} fjcontrib-{{version}}
 srcdir={{workdir}}/fjcontrib-{{version}}
-build_dir={{workdir}}/build
+build_dir={{workdir}}/fjcontrib-{{version}}-build
 
 if [ "{{version}}" != "master" ]; then
-		cd {{srcdir}}
-		git checkout tags/{{version}} -b {{version}}
+    cd {{srcdir}}
+    git checkout tags/{{version}} -b {{version}}
 fi
 
 #srcdir={{workdir}}/fjcontrib-{{version}}
 
-cd {{builddir}}
 # if [ -d "${CGAL_DIR}" ]; then
 # 	# cgal_opt="--with-cgaldir=${CGAL_DIR} --enable-cgal-header-only"
 # 	# echo "$CGAL_DIR"
@@ -72,12 +83,13 @@ other_opts=""
 # if we are on macos we need to add path to coreutils
 os=$(uname -s)
 if [ "${os}" == "Darwin" ]; then
-		echo_warning "building on a mac? - ok!"
+    echo_warning "building on a mac? - ok!"
 fi
 
 cd {{srcdir}}
 
 rm -rfv {{builddir}}
+mkdir -p {{builddir}}
 cd {{builddir}}
 
 BUILD_TYPE="Release"
@@ -89,25 +101,26 @@ BUILD_TESTING="OFF"
 PARALLEL_JOBS={{n_cores}}
 
 cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
-			-DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
-			-DFASTJET_DIR=${fastjet_prefix} \
-			-DCMAKE_CXX_STANDARD=17 \
-			-DCMAKE_CXX_STANDARD_REQUIRED=ON \
-			-DCMAKE_CXX_EXTENSIONS=OFF \
-			-DBUILD_EXAMPLES=${BUILD_EXAMPLES} \
-			-DBUILD_TESTING=${BUILD_TESTING} \
-			${cgal_opt} ${other_opts} \
-			${srcdir} && cmake --build . --target install -- -j {{n_cores}}
+      -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
+      -DFASTJET_DIR=${fastjet_prefix} \
+      -DCMAKE_CXX_STANDARD=17 \
+      -DCMAKE_CXX_STANDARD_REQUIRED=ON \
+      -DCMAKE_CXX_EXTENSIONS=OFF \
+      -DBUILD_EXAMPLES=${BUILD_EXAMPLES} \
+      -DBUILD_TESTING=${BUILD_TESTING} \
+      ${cgal_opt} ${other_opts} \
+      ${srcdir} && cmake --build . --target install -- -j {{n_cores}}
+
 if [ "0x$?" != "0x0" ]; then
-	echo_error "cmake build failed with exit code $?"
-	exit 1
+    echo_error "cmake build failed with exit code $?"
+    exit 1
 fi
 
 if [ -e "${fragile_lib_path}" ]; then
-	echo_info "fragile lib created: ${fragile_lib_path}"
+    echo_info "fragile lib created: ${fragile_lib_path}"
 else
-	echo_error "fragile lib not created: ${fragile_lib_path}"
-	exit 1
+    echo_error "fragile lib not created: ${fragile_lib_path}"
+    exit 1
 fi
 
 exit $?
