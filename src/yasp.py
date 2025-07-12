@@ -250,13 +250,6 @@ def get_pythonpath_change(command_first, command_second):
 	added_paths = new_paths - old_paths
 	removed_paths = old_paths - new_paths
 	return added_paths, removed_paths
-
-def yaspenv_sh_exec():
-	_tmp_yasp = Yasp()
-	yaspenv_sh = os.path.join(_tmp_yasp.yasp_dir, 'yaspenv.sh')
-	if os.path.exists(yaspenv_sh):
-		return yaspenv_sh
-	return None
 		
 #def yaspenv_PYTHONPATH(command):
 def add_to_pythonpath(command, cppyy_include=False):
@@ -441,6 +434,41 @@ def get_os_name():
 		return "win32"
 	return sys.platform
 
+def get_venv_type():
+    """Check if running in conda, venv, or system Python"""
+    
+    # Check for conda
+    if 'CONDA_DEFAULT_ENV' in os.environ:
+        # print(f"🐍 Running in Conda environment: {os.environ['CONDA_DEFAULT_ENV']}")
+        # print(f"   Conda prefix: {os.environ.get('CONDA_PREFIX', 'Not set')}")
+        return 'conda'
+    
+    # Check for virtual environment (venv/virtualenv)
+    if hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix):
+        # print(f"🐍 Running in virtual environment")
+        # print(f"   Virtual env prefix: {sys.prefix}")
+        # print(f"   Base Python prefix: {sys.base_prefix}")
+        return 'venv'
+    
+    # Check if we're in a yasp environment specifically
+    if 'YASP_DIR' in os.environ or any('yasp' in path.lower() for path in sys.path):
+        # print(f"🚀 Running in YASP environment")
+        # print(f"   Python executable: {sys.executable}")
+        return 'yasp'
+    
+    # print(f"🐍 Running in system Python")
+    # print(f"   Python executable: {sys.executable}")
+    return 'system'
+
+def yaspenv_sh_exec(yasp_dir):
+	yaspenv_sh = os.path.join(yasp_dir, 'yaspenv.sh')
+	if get_venv_type() == 'conda':
+		yaspenv_sh = os.path.join(yasp_dir, 'condaenv.sh')
+	if os.path.exists(yaspenv_sh):
+		return yaspenv_sh
+	return None
+
+##### START OF YASP CLASS #####
 class Yasp(GenericObject):
 	_break = 'stop'
 	_continue = 'continue'
@@ -473,7 +501,9 @@ class Yasp(GenericObject):
 		'python_libdir' : get_python_lib_dir(),
 		'os' : get_os_name(),
 		'cpu_count' : multiprocessing.cpu_count(),
-		'error' : False
+		'error' : False,
+		'venv_type': get_venv_type(),
+		'venv_exec_sh': yaspenv_sh_exec(_yasp_dir)
 	}
 
 	def __init__(self, **kwargs):
@@ -1074,6 +1104,7 @@ class Yasp(GenericObject):
 	def module_unload(module_name):
 		_, _ = add_to_pythonpath(f'module unload {module_name}')
 
+###### END OF YASP CLASS ######
 
 def yasp_feature(what, args={}):
 	sb = Yasp(args=args)

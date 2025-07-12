@@ -12,4 +12,5 @@ prepend-path DYLD_LIBRARY_PATH {{python_libdir}}
 
 set-alias yasp_python {{python}}
 set-alias yasp_cd "cd {{yasp_dir}}"
-set-alias yaspenv "{{yasp_dir}}/yaspenv.sh"
+# set-alias yaspenv "{{yasp_dir}}/yaspenv.sh"
+set-alias yaspenv "{{venv_exec_sh}}"
