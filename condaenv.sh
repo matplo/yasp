@@ -21,13 +21,6 @@ export YASP_DIR=${THISD}
 source ${THISD}/src/util/bash/util.sh
 separator "This is yasp conda env at ${YASP_DIR}"
 
-# exit if we are already within a conda environment
-if [[ -n "${CONDA_PREFIX}" ]]; then
-    echo_error "You are already in a conda environment: ${CONDA_PREFIX}"
-    echo_error "Please deactivate it first before running this script."
-    exit 1
-fi
-
 # check if conda is available
 if ! command -v conda &> /dev/null; then
     # try module load conda
@@ -159,20 +152,38 @@ cmnd="$@"
 
 echo_info "Python selected: ${python_selected}"
 
-create_env_cmd="conda create --prefix ${conda_env_prefix} python=${python_selected} -y"
+create_env_cmd=""
 
-# Check if the conda environment exists by checking the directory path
-if [[ -d "$conda_env_prefix" ]] && conda env list | grep -q "$conda_env_prefix"; then
-    echo_info "✓ conda environment at ${conda_env_prefix} exists"
-else
-    echo_warning "✗ conda environment ${conda_env_prefix} does not exist"
-    echo_info "Creating conda environment with command: ${create_env_cmd}..."
-    if ! ${create_env_cmd}; then
-        echo_error "Failed to create conda environment. Please check the error messages above."
-        exit 1
+already_in_conda_env=""
+# exit if we are already within a conda environment
+if [[ -n "${CONDA_PREFIX}" ]]; then
+    echo_warning "You are already in a conda environment: ${CONDA_PREFIX}"
+    # echo_error "Please deactivate it first before running this script."
+    # exit 1
+    # if $@ is zero then exit
+    if [[ $# -eq 0 ]]; then
+        echo_error "No command provided. Exiting..."
+        exit -1
+    fi
+    echo_info "assuming you just want execute a command..."
+    already_in_conda_env="yes"
+fi
+
+if [[ -z "${already_in_conda_env}" ]]; then
+    create_env_cmd="conda create --prefix ${conda_env_prefix} python=${python_selected} -y"
+    # Check if the conda environment exists by checking the directory path
+    if [[ -d "$conda_env_prefix" ]] && conda env list | grep -q "$conda_env_prefix"; then
+        echo_info "✓ conda environment at ${conda_env_prefix} exists"
     else
-        echo_info "Conda environment ${conda_env_prefix} created successfully."
-        first_run="yes"
+        echo_warning "✗ conda environment ${conda_env_prefix} does not exist"
+        echo_info "Creating conda environment with command: ${create_env_cmd}..."
+        if ! ${create_env_cmd}; then
+            echo_error "Failed to create conda environment. Please check the error messages above."
+            exit 1
+        else
+            echo_info "Conda environment ${conda_env_prefix} created successfully."
+            first_run="yes"
+        fi
     fi
 fi
 
@@ -194,11 +205,12 @@ if [[ -n "${first_run}" ]]; then
     echo_warning "This is the first run of the conda environment setup..."
     echo "separator \"this is first run...\"" >> ${tmpfile}
     echo "conda install -y numpy pyyaml tqdm find-libpython" >> ${tmpfile}
-    echo "cd ${conda_env_prefix}" >> ${tmpfile}
-    # Clone the yasp repository and install it in
-    echo "git clone git@github.com:matplo/yasp.git" >> ${tmpfile}
-    echo "cd -" >> ${tmpfile}
-    echo "${conda_env_prefix}/yasp/src/yasp.py -i yasp -m" >> ${tmpfile}
+    echo "${YASP_DIR}/src/yasp.py -i yasp -m" >> ${tmpfile}
+    # echo "cd ${conda_env_prefix}" >> ${tmpfile}
+    # Clone the yasp repository and install it in - no this should not be done
+    # echo "git clone git@github.com:matplo/yasp.git" >> ${tmpfile}
+    # echo "cd -" >> ${tmpfile}
+    # echo "${conda_env_prefix}/yasp/src/yasp.py -i yasp -m" >> ${tmpfile}
     # since we are cloning the yasp repo within conda env lets make sure we take the recipes from this one - no - don't do this its confusing...
     # echo "module use ${conda_env_prefix}/yasp/software/modules" >> ${tmpfile}
     # echo "module load yasp" >> ${tmpfile}
@@ -212,11 +224,12 @@ fi
 venv_startup_file="${conda_env_prefix}/.venvstartup.sh"
 if [ ! -e "${venv_startup_file}" ]; then
     echo_info "Creating ${venv_startup_file} file"
-    internal_yasp_dir=${conda_env_prefix}/yasp/software/modules
+    # internal_yasp_dir=${conda_env_prefix}/yasp/software/modules
+    internal_yasp_dir=${YASP_DIR}/software/modules
     echo "module use ${internal_yasp_dir}" > ${venv_startup_file}
     echo "module load yasp" >> ${venv_startup_file}
-    echo "source ${conda_env_prefix}/yasp/src/util/bash/util.sh" >> ${venv_startup_file}
-    echo "source ${conda_env_prefix}/yasp/src/util/bash/bash_completion.sh" >> ${venv_startup_file}
+    echo "source ${YASP_DIR}/src/util/bash/util.sh" >> ${venv_startup_file}
+    echo "source ${YASP_DIR}/src/util/bash/bash_completion.sh" >> ${venv_startup_file}
     echo "alias conda_env_cd=\"cd ${conda_env_prefix}\"" >> ${venv_startup_file}
     separator "conda:${conda_env_prefix}"
 fi

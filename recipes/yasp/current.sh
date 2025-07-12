@@ -28,7 +28,7 @@ done
 echo "[i] {{python_site_packages_subpath}}"
 echo "[i] {{python_dest_path}}"
 
-{{yasp.yasp_src_dir}}/yasp.py -q feature venv_type
+echo "[i] venv type is:" $({{yasp.yasp_src_dir}}/yasp.py -q feature venv_type)
 # if [[ -z "${VIRTUAL_ENV}" ]]; then
 # 	echo "[i] Not running within a virtual environment"
 # 	{{yasp.yasp_src_dir}}/yasp.py -q feature venv_type
@@ -41,7 +41,6 @@ if [[ -n "${VIRTUAL_ENV}" ]] || [[ -n "${CONDA_PREFIX}" ]]; then
 	# deal with yasp.py
 	mkdir -pv ${python_dest_path}/yasp
 	ln -sfv {{yasp.yasp_src_dir}}/yasp.py ${python_dest_path}/yasp/__init__.py
-	{{yasp.yasp_src_dir}}/yasp.py -q feature venv_type
 	for pack in yasprepl cppyyhelper yaspreplstring
 	do
 		mkdir -pv ${python_dest_path}/yasp/${pack}

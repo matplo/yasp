@@ -272,7 +272,9 @@ def add_to_pythonpath(command, cppyy_include=False):
 		print("[e] yaspenv.sh not found")
 		return None, None
 	if debug:
-		print('[yasp-i] Using yaspenv.sh at', _yaspenv_sh_exec)
+		print('[yasp-i] using env shell at', _yaspenv_sh_exec)
+		print('[yasp-i] executing:', f'{_yaspenv_sh_exec} {tmp_file_1}')
+		print('[yasp-i] executing:', f'{_yaspenv_sh_exec} {tmp_file_2}')
 	added_paths, removed_paths = get_pythonpath_change(f'{_yaspenv_sh_exec} {tmp_file_1}', f'{_yaspenv_sh_exec} {tmp_file_2}')
 	# manipulate sys.path to add the new paths
 	for path in added_paths:
@@ -292,8 +294,11 @@ def add_to_pythonpath(command, cppyy_include=False):
 def module_load(module_name):
 	_, _ = add_to_pythonpath(f'module load {module_name}')
 
-def module_load_cppyy(module_name):
-	_, _ = add_to_pythonpath(f'module load {module_name}', cppyy_include=True)
+def module_load_cppyy(module_name, from_dir=None):
+	module_cmnd = f'module load {module_name}'
+	if from_dir is not None:
+		module_cmnd = f'module use {from_dir}; {module_cmnd}'
+	_, _ = add_to_pythonpath(module_cmnd, cppyy_include=True)
 
 def module_unload(module_name):
 	_, _ = add_to_pythonpath(f'module unload {module_name}')
@@ -460,7 +465,18 @@ def get_venv_type():
     # print(f"   Python executable: {sys.executable}")
     return 'system'
 
-def yaspenv_sh_exec(yasp_dir):
+def yaspenv_sh_exec(yasp_dir=None):
+	# get env $YASP_VENV_SH
+	yaspenv_sh = os.getenv('YASP_VENV_SH')
+	if yaspenv_sh:
+		if os.path.exists(yaspenv_sh):
+			return yaspenv_sh
+		else:
+			print(f'[w] YASP_VENV_SH environment variable points to {yaspenv_sh} but it does not exist.', file=sys.stderr)
+			return None
+	# if not set, try to find it in the YASP_DIR
+	if yasp_dir is None:
+		yasp_dir = os.path.abspath(os.path.join(get_this_directory(), '..'))
 	yaspenv_sh = os.path.join(yasp_dir, 'yaspenv.sh')
 	if get_venv_type() == 'conda':
 		yaspenv_sh = os.path.join(yasp_dir, 'condaenv.sh')
