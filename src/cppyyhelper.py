@@ -144,6 +144,25 @@ class YaspCppyyHelper(yasp.GenericObject):
 			if p not in self.loaded_packages:
 				self.cppyy_add_paths(p)
 				self.loaded_packages.append(p)
+			# check if env variable YASP_PACKAGE_DIR is set
+			_pack_upper_case = p.upper()
+			_yasp_package_dir = os.environ.get(f'YASP_{_pack_upper_case}_DIR', None)
+			if _yasp_package_dir is not None:
+				_include_path = os.path.join(_yasp_package_dir, p, 'include')
+				_lib_path = os.path.join(_yasp_package_dir, p, 'lib')
+				_lib64_path = os.path.join(_yasp_package_dir, p, 'lib64')
+				if os.path.isdir(_include_path):
+					if _include_path not in self.paths_include:
+						cppyy.add_include_path(_include_path)
+						self.paths_include.append(_include_path)
+				if os.path.isdir(_lib_path):
+					if _lib_path not in self.paths_lib:
+						cppyy.add_library_path(_lib_path)
+						self.paths_lib.append(_lib_path)
+				if os.path.isdir(_lib64_path):
+					if _lib64_path not in self.paths_lib:
+						cppyy.add_library_path(_lib64_path)
+						self.paths_lib.append(_lib64_path)
 		for fn in headers:
 			if yasp.debug:
 				print('[yasp-i] Including header:', fn, file=sys.stderr)
