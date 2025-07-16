@@ -151,6 +151,8 @@ class YaspCppyyHelper(yasp.GenericObject):
 				_include_path = os.path.join(_yasp_package_dir, p, 'include')
 				_lib_path = os.path.join(_yasp_package_dir, p, 'lib')
 				_lib64_path = os.path.join(_yasp_package_dir, p, 'lib64')
+				if yasp.debug:
+					print('[yasp-i] Adding YASP_PACKAGE_DIR:', _yasp_package_dir, file=sys.stderr)
 				if os.path.isdir(_include_path):
 					if _include_path not in self.paths_include:
 						cppyy.add_include_path(_include_path)
