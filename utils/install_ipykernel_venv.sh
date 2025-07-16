@@ -1,25 +1,27 @@
 #!/bin/bash
 
-kernel_name=$(echo $CONDA_DEFAULT_ENV | sed 's/\//-/g' | sed 's/ //g' | sed 's/--/_/g' | sed 's/-/_/g' | sed 's/^_//g' | sed 's/_$//g')
-kernel_display_name=${kernel_name}
+# make sure we are inside the virtual environment
+if [ -z "$VIRTUAL_ENV" ]; then
+		echo "[e] Please activate your virtual environment first."
+		exit 1
+fi
 
-echo "Installing IPython kernel for conda environment: ${kernel_name}"
+python -m pip install --upgrade pip
 
-# first check if ipykernel is already installed
-if python -c "import ipykernel" &> /dev/null; then
-	echo "ipykernel package is already installed"
+# if requirements.txt does not exist, exit with an error
+if [ ! -f requirements.txt ]; then
+	echo "[e] requirements.txt not found - making something up..."
+	echo "[i] Creating a dummy requirements.txt file."
+	ml_pack="jupyter ipykernel numpy pandas scikit-learn matplotlib seaborn tensorflow torch torchvision torchtext torchdata torchmetrics scipy scikit-image statsmodels xgboost lightgbm catboost mlflow pytorch-lightning optuna hyperopt ray dask pydantic fastapi streamlit gradio"
+	jupyter_pack="jupyterlab ipykernel numpy pandas seaborn"
+	for pack in ${jupyter_pack}; do
+		echo "$pack" >> requirements.txt
+	done
+	echo "[i] Dummy requirements.txt created. Proceeding with installation."
+	python -m pip install -r requirements.txt
 else
-	echo "ipykernel package is not installed, installing now with conda"
-	conda install -y conda-forge::ipykernel
-	if [ $? -ne 0 ]; then
-		echo "Failed to install ipykernel with conda"
-		exit 1
-	fi
-fi	
-
-if [ $? -ne 0 ]; then
-		echo "Failed to install ipykernel"
-		exit 1
+	echo "[i] requirements.txt found. Proceeding with installation."
+	python -m pip install -r requirements.txt
 fi
 
 # find all the YASP_XYZ_DIR variables and add them to the environment
@@ -47,3 +49,4 @@ fi
 
 echo "IPython kernel installed successfully for ${kernel_name}"
 
+# jupyter kernelspec list
