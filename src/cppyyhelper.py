@@ -36,11 +36,23 @@ class YaspCppyyHelper(yasp.GenericObject):
 				print('[yasp-i] Running in Jupyter:', cls._instance.jupyter, file=sys.stderr)
 		return cls._instance
 
+	def add_yasp_env_paths(self):
+		if yasp.debug:
+			print('[yasp-i] Adding YASP environment paths', file=sys.stderr)
+		# get all env variables and loop; if variable is in the format YASP_XXX_DIR, add the path to cppyy
+		for key, value in os.environ.items():
+			if key.startswith('YASP_') and key.endswith('_DIR'):
+				if yasp.debug:
+					print(f'[yasp-i] Adding YASP path: {value}', file=sys.stderr)
+				cppyy.add_include_path(os.path.join(value, 'include'))
+				add_to_ld_library_path(os.path.join(value, 'lib'))
+				add_to_ld_library_path(os.path.join(value, 'lib64'))
 
 	def reload_yasp_cppyy_paths(self):
 		if yasp.debug:
 			print('[yasp-i] Reloading YaspCppyyHelper paths', file=sys.stderr)
 		_data = yasp.YaspSingletonData()
+		self.add_yasp_env_paths()	
 		if self.paths_include is None:
 			self.paths_include = []
 		for _path in _data.cppyy_paths:
@@ -133,8 +145,10 @@ class YaspCppyyHelper(yasp.GenericObject):
 											print(f"[yasp-error] Failed to load dependency: {dep_path}, error: {e}", file=sys.stderr)
 			except subprocess.CalledProcessError as e:
 					print(f"Error running ldd on {lib_path}: {e}", file=sys.stderr)
-            
+        
 	def load(self, packages=[], libs=[], headers=[]):
+		if yasp.debug:
+			print('[yasp-i] This is :', f"CPPyyHelper.load {self.load} with {packages}, {libs}, {headers}", file=sys.stderr)
 		self.reload_yasp_cppyy_paths()
 		if self.loaded_packages is None:
 			self.loaded_packages = []
@@ -144,27 +158,6 @@ class YaspCppyyHelper(yasp.GenericObject):
 			if p not in self.loaded_packages:
 				self.cppyy_add_paths(p)
 				self.loaded_packages.append(p)
-			# check if env variable YASP_PACKAGE_DIR is set
-			_pack_upper_case = p.upper()
-			_yasp_package_dir = os.environ.get(f'YASP_{_pack_upper_case}_DIR', None)
-			if _yasp_package_dir is not None:
-				_include_path = os.path.join(_yasp_package_dir, p, 'include')
-				_lib_path = os.path.join(_yasp_package_dir, p, 'lib')
-				_lib64_path = os.path.join(_yasp_package_dir, p, 'lib64')
-				if yasp.debug:
-					print('[yasp-i] Adding YASP_PACKAGE_DIR:', _yasp_package_dir, file=sys.stderr)
-				if os.path.isdir(_include_path):
-					if _include_path not in self.paths_include:
-						cppyy.add_include_path(_include_path)
-						self.paths_include.append(_include_path)
-				if os.path.isdir(_lib_path):
-					if _lib_path not in self.paths_lib:
-						cppyy.add_library_path(_lib_path)
-						self.paths_lib.append(_lib_path)
-				if os.path.isdir(_lib64_path):
-					if _lib64_path not in self.paths_lib:
-						cppyy.add_library_path(_lib64_path)
-						self.paths_lib.append(_lib64_path)
 		for fn in headers:
 			if yasp.debug:
 				print('[yasp-i] Including header:', fn, file=sys.stderr)
@@ -198,9 +191,9 @@ class YaspCppyyHelper(yasp.GenericObject):
 			x = getattr(cppyy.gbl, symbol)
 			if x is not None:
 				if verbose or yasp.debug:
-					print('[yasp-i] returning symbol ' + symbol, x)
+					print('[yasp-i] returning symbol ' + symbol + ' from cppyy.gbl', x, file=sys.stderr)
 				return x
 		except AttributeError:
 			if verbose or yasp.debug:
-				print('[yasp-warn] symbol ' + symbol + ' not found')
+				print('[yasp-warn] symbol ' + symbol + ' not found in cppyy.gbl', file=sys.stderr)
 		return None
