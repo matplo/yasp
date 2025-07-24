@@ -44,9 +44,12 @@ class YaspCppyyHelper(yasp.GenericObject):
 			if key.startswith('YASP_') and key.endswith('_DIR'):
 				if yasp.debug:
 					print(f'[yasp-i] Adding YASP path: {value}', file=sys.stderr)
-				cppyy.add_include_path(os.path.join(value, 'include'))
-				add_to_ld_library_path(os.path.join(value, 'lib'))
-				add_to_ld_library_path(os.path.join(value, 'lib64'))
+				if os.path.isdir(os.path.join(value, 'include')):
+					cppyy.add_include_path(os.path.join(value, 'include'))
+				if os.path.isdir(os.path.join(value, 'lib')):
+					add_to_ld_library_path(os.path.join(value, 'lib'))
+				if os.path.isdir(os.path.join(value, 'lib64')):
+					add_to_ld_library_path(os.path.join(value, 'lib64'))
 
 	def reload_yasp_cppyy_paths(self):
 		if yasp.debug:
