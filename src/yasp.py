@@ -225,6 +225,18 @@ def get_python_lib_dir():
 		# Final fallback: return the directory of the Python executable
 		return os.path.dirname(sys.executable)
 
+def get_python_include_dir():
+		"""
+		Get the Python library directory using distutils.
+		"""
+		try:
+				from distutils.sysconfig import get_python_inc
+				return get_python_inc()
+		except ImportError:
+				pass
+
+		return ""
+
 
 import subprocess
 import sys
@@ -515,6 +527,7 @@ class Yasp(GenericObject):
 		'python_version_no_dot' : f'{sys.version_info.major}{sys.version_info.minor}',
 		'python_site_packages_subpath' : f'python{sys.version_info.major}.{sys.version_info.minor}/site-packages',
 		'python_libdir' : get_python_lib_dir(),
+		'python_includedir' : get_python_include_dir(),
 		'os' : get_os_name(),
 		'cpu_count' : multiprocessing.cpu_count(),
 		'error' : False,

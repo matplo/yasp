@@ -1,12 +1,14 @@
 #%Module
-setenv HEPMC2_DIR {{prefix}}
-setenv HEPMC2DIR {{prefix}}
-setenv HEPMC2_VERSION {{version}}
+setenv BOOST_DIR {{prefix}}
+setenv BOOSTDIR {{prefix}}
+setenv BOOST_VERSION {{version}}
+prepend-path PATH {{prefix}}/bin
 prepend-path DYLD_LIBRARY_PATH {{prefix}}/lib
 prepend-path LD_LIBRARY_PATH {{prefix}}/lib
 prepend-path DYLD_LIBRARY_PATH {{prefix}}/lib64
 prepend-path LD_LIBRARY_PATH {{prefix}}/lib64
 prepend-path PYTHONPATH {{prefix}}/lib
+#prepend-path PYTHONPATH {{prefix}}/lib/{{python_site_packages_subpath}}
 prepend-path PYTHONPATH {{prefix}}/lib64
 #prepend-path PYTHONPATH {{prefix}}/lib64/{{python_site_packages_subpath}}
 prepend-path CPATH {{prefix}}/include
