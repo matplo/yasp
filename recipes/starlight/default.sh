@@ -8,7 +8,8 @@ function exit_with_error()
 
 source ${YASP_DIR}/src/util/bash/util.sh
 
-export STARLIGHTGITHUB=git@github.com:matplo/STARlight.git
+export STARLIGHTGITHUB=https://github.com/matplo/STARlight.git
+#export STARLIGHTGITHUB=git@github.com:matplo/STARlight.git
 starlight_version=master
 
 echo "[i] Using STARlight at ${STARLIGHTGITHUB} ${starlight_version}"
