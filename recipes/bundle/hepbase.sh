@@ -85,16 +85,35 @@ if [ "x{{select}}" != "xNone" ]; then
 fi
 separator "installing hepbase modules"
 echo_info "selection is ${selection}"
-echo_error "opts are ${opts}"
+note "opts are ${opts}"
 
-install_package ${selection} fastjet/3.4.2 		True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=3.4.2
-install_package ${selection} fjcontrib/1.054 	False 		 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=1.054  #make_check=True 
-install_package ${selection} jetflav/default 	False 										
+# check what the current version of cmake is
+cmake_version=$(cmake --version | grep version | awk '{print $3}')
+if [ "x${cmake_version}" == "x" ]; then
+	echo_error "cmake version not set - exiting"
+	exit 1
+fi
+# if cmake version is >= 4 then install the older version
+cmake_version_major=$(echo ${cmake_version} | cut -d'.' -f1)
+if [ "${cmake_version_major}" -ge 4 ]; then
+	warning "cmake version is ${cmake_version} - installing older version"
+	install_package ${selection} cmake/3.31.7 		True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix}
+else
+	note "cmake version is ${cmake_version} - OK"
+fi
+# install_package ${selection} fastjet/3.4.2 		True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=3.4.3
+# install_package ${selection} fastjet/master 		True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix}
+install_package ${selection} fastjet/3.4.2 		True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=3.5.1
+# install_package ${selection} fjcontrib/1.054 	False 		 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=1.054  #make_check=True 
+# install_package ${selection} fjcontrib/1.101 	False 		 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=1.101  #make_check=True
+install_package ${selection} fjcontrib/mp 	False 		 	${opts} --workdir=${this_workdir} --prefix=${this_prefix}
+# jetflav already in fjcontrib...
+#install_package ${selection} jetflav/default 	False 										
 install_package ${selection} HepMC2/default 	True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=2.06.11
 install_package ${selection} LHAPDF6/6.5.4 		True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=6.5.5
-install_package ${selection} root/default 		True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=6.34.02
-install_package ${selection} HepMC3/default 	True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=3.3.0
-install_package ${selection} pythia8/8310		 	True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=8310
+install_package ${selection} root/default 		True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=6.36.00 n_cores=30
+install_package ${selection} HepMC3/default 	True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=3.3.1
+install_package ${selection} pythia8/default		 	True 			 	${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=8315
 install_package ${selection} roounfold/default 	True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=3.0.5
 # install_package ${selection} roounfold/default 	True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=2.1
 install_package ${selection} dpmjet/19.3.7 			True 			${opts} --workdir=${this_workdir} --prefix=${this_prefix} --opt version=19.3.7

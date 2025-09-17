@@ -25,15 +25,22 @@ do
 	ln -sv {{yasp.yasp_src_dir}}/${pack}.py {{python_dest_path}}/yasp/${pack}/__init__.py
 done
 
-if [[ -z "${VIRTUAL_ENV}" ]]; then
-	echo "[i] Not running within a virtual environment"
-else
+echo "[i] {{python_site_packages_subpath}}"
+echo "[i] {{python_dest_path}}"
+
+echo "[i] venv type is:" $({{yasp.yasp_src_dir}}/yasp.py -q feature venv_type)
+# if [[ -z "${VIRTUAL_ENV}" ]]; then
+# 	echo "[i] Not running within a virtual environment"
+# 	{{yasp.yasp_src_dir}}/yasp.py -q feature venv_type
+# else
+if [[ -n "${VIRTUAL_ENV}" ]] || [[ -n "${CONDA_PREFIX}" ]]; then
+	[[ -n "${VIRTUAL_ENV}" ]] &&  echo "[i] Running within a virtual environment at ${VIRTUAL_ENV}"
+	[[ -n "${CONDA_PREFIX}" ]] && echo "[i] Running within a conda environment at ${CONDA_PREFIX}" && VIRTUAL_ENV=${CONDA_PREFIX}
 	echo "[i] Running within a virtual environment at ${VIRTUAL_ENV}"
 	python_dest_path=${VIRTUAL_ENV}/lib/{{python_site_packages_subpath}}
 	# deal with yasp.py
 	mkdir -pv ${python_dest_path}/yasp
 	ln -sfv {{yasp.yasp_src_dir}}/yasp.py ${python_dest_path}/yasp/__init__.py
-
 	for pack in yasprepl cppyyhelper yaspreplstring
 	do
 		mkdir -pv ${python_dest_path}/yasp/${pack}

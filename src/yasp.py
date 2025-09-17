@@ -16,7 +16,7 @@ import multiprocessing
 import copy
 import json
 
-
+debug = False
 class GenericObject(object):
 	max_chars = 1000
 
@@ -123,7 +123,9 @@ class YaspSingletonData(GenericObject):
 	_instance = None
 	def __new__(cls):
 		if cls._instance is None:
-			print('[i] Creating YaspSingletonData singleton.', file=sys.stderr)
+			global debug
+			if debug:
+				print('[yasp-i] Creating YaspSingletonData singleton.', file=sys.stderr)
 			cls._instance = super(YaspSingletonData, cls).__new__(cls)
 			cls._instance.cppyy_paths = []
 		return cls._instance
@@ -135,10 +137,24 @@ class YaspSingletonData(GenericObject):
 			if spath not in self.cppyy_paths:
 				self.cppyy_paths.append(spath)
 		else:
-			if self.verbose:
+			if self.verbose or debug:
 				print(f'[w] unable to add {spath} to cppyy include path')
 
 
+def in_jupyter_notebook():
+    try:
+        from IPython import get_ipython
+        shell = get_ipython().__class__.__name__
+        if shell == 'ZMQInteractiveShell':
+            return True   # Jupyter notebook or qtconsole
+        elif shell == 'TerminalInteractiveShell':
+            return False  # Terminal running IPython
+        else:
+            return False  # Other type (?)
+    except Exception:
+        return False      # Probably standard Python interpreter
+      
+      
 def get_this_directory():
 	_this_file = os.path.dirname(os.path.realpath(os.path.abspath(__file__)))
 	return _this_file
@@ -246,16 +262,10 @@ def get_pythonpath_change(command_first, command_second):
 	added_paths = new_paths - old_paths
 	removed_paths = old_paths - new_paths
 	return added_paths, removed_paths
-
-def yaspenv_sh_exec():
-	_tmp_yasp = Yasp()
-	yaspenv_sh = os.path.join(_tmp_yasp.yasp_dir, 'yaspenv.sh')
-	if os.path.exists(yaspenv_sh):
-		return yaspenv_sh
-	return None
 		
 #def yaspenv_PYTHONPATH(command):
 def add_to_pythonpath(command, cppyy_include=False):
+	global debug
 	# make two tmp files:
 	# one with the command and
 	# one without it
@@ -273,17 +283,22 @@ def add_to_pythonpath(command, cppyy_include=False):
 	if _yaspenv_sh_exec is None:
 		print("[e] yaspenv.sh not found")
 		return None, None
-	print('[i] Using yaspenv.sh at', _yaspenv_sh_exec)
+	if debug:
+		print('[yasp-i] using env shell at', _yaspenv_sh_exec)
+		print('[yasp-i] executing:', f'{_yaspenv_sh_exec} {tmp_file_1}')
+		print('[yasp-i] executing:', f'{_yaspenv_sh_exec} {tmp_file_2}')
 	added_paths, removed_paths = get_pythonpath_change(f'{_yaspenv_sh_exec} {tmp_file_1}', f'{_yaspenv_sh_exec} {tmp_file_2}')
 	# manipulate sys.path to add the new paths
 	for path in added_paths:
-		print(f"[i] Adding {path} to sys.path")
+		if debug:
+			print(f"[i] Adding {path} to sys.path")
 		sys.path.append(path)
 		if cppyy_include:
 			_inc_path = os.path.join(os.path.dirname(path), 'include')
 			YaspSingletonData().cppyy_add_paths(_inc_path)
 	for path in removed_paths:
-		print(f"[i] Removing {path} from sys.path")
+		if debug:
+			print(f"[i] Removing {path} from sys.path")
 		while path in sys.path:
 			sys.path.remove(path)
 	return added_paths, removed_paths
@@ -291,8 +306,11 @@ def add_to_pythonpath(command, cppyy_include=False):
 def module_load(module_name):
 	_, _ = add_to_pythonpath(f'module load {module_name}')
 
-def module_load_cppyy(module_name):
-	_, _ = add_to_pythonpath(f'module load {module_name}', cppyy_include=True)
+def module_load_cppyy(module_name, from_dir=None):
+	module_cmnd = f'module load {module_name}'
+	if from_dir is not None:
+		module_cmnd = f'module use {from_dir}; {module_cmnd}'
+	_, _ = add_to_pythonpath(module_cmnd, cppyy_include=True)
 
 def module_unload(module_name):
 	_, _ = add_to_pythonpath(f'module unload {module_name}')
@@ -313,7 +331,7 @@ def shell_exec(command):
 def exec_cmnd_thread(cmnd, verbose, shell):
 	# _args = shlex.split(cmnd)
 	if verbose:
-		print('[i] calling', cmnd, file=sys.stderr)
+		print('[yasp-i] calling', cmnd, file=sys.stderr)
 	try:
 		# p = subprocess.Popen(_args, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		# out, err = p.communicate()
@@ -322,7 +340,7 @@ def exec_cmnd_thread(cmnd, verbose, shell):
 		p.check_returncode()
 		if p:
 			if verbose:
-				print('[i] result of: ' + str(p.args) + '\n    out:\n' + str(p.stdout.decode('utf-8')) + '\n    err:\n' + str(p.stderr.decode('utf-8')) + '\n     rc: ' + str(p.returncode),  file=sys.stderr)
+				print('[yasp-i] result of: ' + str(p.args) + '\n    out:\n' + str(p.stdout.decode('utf-8')) + '\n    err:\n' + str(p.stderr.decode('utf-8')) + '\n     rc: ' + str(p.returncode),  file=sys.stderr)
 			return p
 	except OSError as e:
 		out = f'[e] failed to execute: f{_args}'
@@ -341,7 +359,7 @@ def exec_cmnd_thread_pout(cmnd, verbose, shell, poutname):
 	# _args = shlex.split(cmnd)
 	pout = open(poutname, 'w')
 	if verbose:
-		print('[i] calling', cmnd, file=sys.stderr)
+		print('[yasp-i] calling', cmnd, file=sys.stderr)
 	try:
 		# p = subprocess.Popen(_args, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		# out, err = p.communicate()
@@ -350,8 +368,8 @@ def exec_cmnd_thread_pout(cmnd, verbose, shell, poutname):
 		p.check_returncode()
 		if p:
 			if verbose:
-				# print('[i] result of: ' + str(p.args) + '\n    out:\n' + str(p.stdout.decode('utf-8')) + '\n    err:\n' + str(p.stderr.decode('utf-8')) + '\n     rc: ' + str(p.returncode),  file=sys.stderr)
-				print('[i] result of: ' + str(p.args) + '\n     rc: ' + str(p.returncode),  file=sys.stderr)
+				# print('[yasp-i] result of: ' + str(p.args) + '\n    out:\n' + str(p.stdout.decode('utf-8')) + '\n    err:\n' + str(p.stderr.decode('utf-8')) + '\n     rc: ' + str(p.returncode),  file=sys.stderr)
+				print('[yasp-i] result of: ' + str(p.args) + '\n     rc: ' + str(p.returncode),  file=sys.stderr)
 			return p
 	except OSError as e:
 		out = f'[e] failed to execute: f{cmnd}'
@@ -376,13 +394,13 @@ class ThreadExec(GenericObject):
 			print(self)
 		if self.n_jobs is None:
 			self.n_jobs = multiprocessing.cpu_count() * 2
-		print('[i] setting max number of jobs to', self.n_jobs)
+		print('[yasp-i] setting max number of jobs to', self.n_jobs)
 		if self.fname:
 			with open(self.fname) as f:
 				lines = f.readlines()
 				self.exec_list(lines)
 		else:
-			print('[i] exec file unspecified')
+			print('[yasp-i] exec file unspecified')
 
 	def count_threads_alive(self, threads):
 		_count = len([thr for thr in threads if thr.is_alive()])
@@ -394,7 +412,7 @@ class ThreadExec(GenericObject):
 		os.close(logname_base[0])
 		lognames = [logname_base[1] + '{}'.format(ilc) for ilc in range(len(lcommands))]
 		# _ = [os.close(f[0]) for f in logs]
-		print('[i] log for line N goes to {}N'.format(logname_base[1]))
+		print('[yasp-i] log for line N goes to {}N'.format(logname_base[1]))
 		pbar_l = tqdm.tqdm(lcommands, desc='threads launched')
 		pbar_c = tqdm.tqdm(lcommands, desc='threads completed')
 		for ilc, lc in enumerate(lcommands):
@@ -433,6 +451,52 @@ def get_os_name():
 		return "win32"
 	return sys.platform
 
+def get_venv_type():
+    """Check if running in conda, venv, or system Python"""
+    
+    # Check for conda
+    if 'CONDA_DEFAULT_ENV' in os.environ:
+        # print(f"🐍 Running in Conda environment: {os.environ['CONDA_DEFAULT_ENV']}")
+        # print(f"   Conda prefix: {os.environ.get('CONDA_PREFIX', 'Not set')}")
+        return 'conda'
+    
+    # Check for virtual environment (venv/virtualenv)
+    if hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix):
+        # print(f"🐍 Running in virtual environment")
+        # print(f"   Virtual env prefix: {sys.prefix}")
+        # print(f"   Base Python prefix: {sys.base_prefix}")
+        return 'venv'
+    
+    # Check if we're in a yasp environment specifically
+    if 'YASP_DIR' in os.environ or any('yasp' in path.lower() for path in sys.path):
+        # print(f"🚀 Running in YASP environment")
+        # print(f"   Python executable: {sys.executable}")
+        return 'yasp'
+    
+    # print(f"🐍 Running in system Python")
+    # print(f"   Python executable: {sys.executable}")
+    return 'system'
+
+def yaspenv_sh_exec(yasp_dir=None):
+	# get env $YASP_VENV_SH
+	yaspenv_sh = os.getenv('YASP_VENV_SH')
+	if yaspenv_sh:
+		if os.path.exists(yaspenv_sh):
+			return yaspenv_sh
+		else:
+			print(f'[w] YASP_VENV_SH environment variable points to {yaspenv_sh} but it does not exist.', file=sys.stderr)
+			return None
+	# if not set, try to find it in the YASP_DIR
+	if yasp_dir is None:
+		yasp_dir = os.path.abspath(os.path.join(get_this_directory(), '..'))
+	yaspenv_sh = os.path.join(yasp_dir, 'yaspenv.sh')
+	if get_venv_type() == 'conda':
+		yaspenv_sh = os.path.join(yasp_dir, 'condaenv.sh')
+	if os.path.exists(yaspenv_sh):
+		return yaspenv_sh
+	return None
+
+##### START OF YASP CLASS #####
 class Yasp(GenericObject):
 	_break = 'stop'
 	_continue = 'continue'
@@ -466,7 +530,9 @@ class Yasp(GenericObject):
 		'python_includedir' : get_python_include_dir(),
 		'os' : get_os_name(),
 		'cpu_count' : multiprocessing.cpu_count(),
-		'error' : False
+		'error' : False,
+		'venv_type': get_venv_type(),
+		'venv_exec_sh': yaspenv_sh_exec(_yasp_dir)
 	}
 
 	def __init__(self, **kwargs):
@@ -584,7 +650,7 @@ class Yasp(GenericObject):
 			_what = _which[w]
 			out, err, rc = self.exec_cmnd(f"which {_what}")
 			if rc == 0:
-				# print('[i] g++ is', out.decode('utf-8'))
+				# print('[yasp-i] g++ is', out.decode('utf-8'))
 				self.__setattr__(w, out.decode("utf-8").strip("\n"))
 		if self.n_cpu is None:
 			self.n_cpu = os.cpu_count()
@@ -1067,6 +1133,7 @@ class Yasp(GenericObject):
 	def module_unload(module_name):
 		_, _ = add_to_pythonpath(f'module unload {module_name}')
 
+###### END OF YASP CLASS ######
 
 def yasp_feature(what, args={}):
 	sb = Yasp(args=args)
@@ -1210,7 +1277,7 @@ def check_if_same_file(args):
 		_args.install = None
 	sb = Yasp(args=_args)
 	if os.path.samefile(os.path.abspath(os.path.realpath(sys.executable)), sb.python) is False:
-		print('[w] looks like yasp called with different python than configured with...', file=sys.stderr)
+		print('[yasp-warn] looks like yasp called with different python than configured with...', file=sys.stderr)
 		print('    this python is [', sys.executable, 	']', file=sys.stderr)
 		print('    yasp python is [', sb.python, 		']', file=sys.stderr)
 		if sb.user_confirm('execute with yasp python?', 'y') == 'yes':
@@ -1326,12 +1393,12 @@ def main():
 			_lmod_cmnd='{} list'.format(mcmnd)
 			out, err, rc = sb.exec_cmnd(_lmod_cmnd)
 			if rc == 0:
-				print('[i] will use', mcmnd, 'as module command')
+				print('[yasp-i] will use', mcmnd, 'as module command')
 			else:
 				print(f'[error] unable to use neither module command nor {mcmnd}', err)
 				return 2
 		modfname = os.path.join(sb.base_prefix, 'modules', args.make_module)
-		print('[i] will write to:', modfname)
+		print('[yasp-i] will write to:', modfname)
 		print(f'[i] prefix: {sb.prefix}')
 		module_use_path = os.path.join(sb.prefix, args.make_module, 'modules')
 		if not os.path.isdir(module_use_path):

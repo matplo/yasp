@@ -22,7 +22,7 @@ echo "Python site packages path:" {{prefix}}/lib/{{python_site_packages_subpath}
 
 python_opt=ON
 cmake ${ROOTOPT} \
-	-DHEPMC3_BUILD_EXAMPLES=ON \
+	-DHEPMC3_BUILD_EXAMPLES=OFF \
 	-DHEPMC3_ENABLE_TEST=ON \
 	-DCMAKE_INSTALL_PREFIX={{prefix}} \
 	-DHEPMC3_ENABLE_PYTHON:BOOL={{python_opt}} \

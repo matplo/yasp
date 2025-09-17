@@ -102,27 +102,33 @@ export -f echo_info
 
 function echo_warning()
 {
-	(>&2 echo -e "\033[1;93m$@ \033[0m")
+	(>&2 echo -e "\033[1;93m[warning] $@ \033[0m")
 }
 export -f echo_warning
 
 function echo_error()
 {
-	(>&2 echo -e "\033[1;31m$@ \033[0m")
+	(>&2 echo -e "\033[1;31m[error] $@ \033[0m")
 }
-export echo_error
+export -f echo_error
 
 function echo_note_red()
 {
 	(>&2 echo -e "\033[1;31m[note] $@ \033[0m")
 }
-export echo_note_red
+export -f echo_note_red
 
 function note_red()
 {
 	(>&2 echo -e "\033[1;31m[note] $@ \033[0m")
 }
 export -f note_red
+
+function note_yellow()
+{
+	(>&2 echo -e "\033[1;33m[note] $@ \033[0m")
+}
+export -f note_yellow
 
 function separator()
 {

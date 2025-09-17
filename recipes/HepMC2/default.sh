@@ -22,6 +22,7 @@ cmake -Dmomentum:STRING=GEV -Dlength:STRING=CM \
 			      	-DCMAKE_MACOSX_RPATH=ON \
 			      	-DCMAKE_INSTALL_RPATH={{prefix}}/lib \
 			      	-DCMAKE_BUILD_WITH_INSTALL_NAME_DIR=ON \
+							-DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
 					{{srcdir}}
 
 
